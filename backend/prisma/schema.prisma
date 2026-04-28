@@ -1,0 +1,47 @@
+// prisma/schema.prisma
+
+datasource db {
+  provider = "postgresql" 
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  password     String
+  name         String?
+  role         Role          @default(USER)
+  balance      Float         @default(0) // Saldo utama
+  transactions Transaction[]
+  orders       Order[]
+  createdAt    DateTime      @default(now())
+}
+
+model Transaction {
+  id          String   @id @default(uuid())
+  userId      String
+  amount      Float
+  type        String   // "INCOME" atau "EXPENSE"
+  category    String   // Contoh: "Food", "Salary", "Transport"
+  description String?
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model Order {
+  id        String   @id @default(uuid())
+  userId    String
+  foodId    String
+  status    String   @default("PENDING") // PENDING, ON_THE_WAY, DELIVERED
+  total     Float
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
