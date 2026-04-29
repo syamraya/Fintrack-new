@@ -1,11 +1,13 @@
 // prisma/schema.prisma
 
-datasource db {
-  provider = "postgresql" 
-}
 
 generator client {
   provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql" 
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum Role {
@@ -23,6 +25,7 @@ model User {
   transactions Transaction[]
   orders       Order[]
   createdAt    DateTime      @default(now())
+  @@map("users")
 }
 
 model Transaction {
