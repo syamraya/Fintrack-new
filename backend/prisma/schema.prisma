@@ -1,50 +1,41 @@
-// prisma/schema.prisma
+  // prisma/schema.prisma
 
 
-generator client {
-  provider = "prisma-client-js"
-}
-datasource db {
-  provider = "postgresql" 
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
-}
+  generator client {
+    provider = "prisma-client-js"
+  }
+  datasource db {
+    provider = "postgresql" 
+    url       = env("DATABASE_URL")
+    directUrl = env("DIRECT_URL")
+  }
 
-enum Role {
-  USER
-  ADMIN
-}
+  enum Role {
+    USER
+    ADMIN
+  }
 
-model User {
-  id           String        @id @default(uuid())
-  email        String        @unique
-  password     String
-  name         String?
-  role         Role          @default(USER)
-  balance      Float         @default(0) // Saldo utama
-  transactions Transaction[]
-  orders       Order[]
-  createdAt    DateTime      @default(now())
-  @@map("users")
-}
+  model User {
+    id           String        @id @default(uuid())
+    email        String        @unique
+    password     String
+    name         String?
+    role         Role          @default(USER)
+    balance      Float         @default(0) // Saldo utama
+    transactions Transaction[]
+    createdAt    DateTime      @default(now())
+    @@map("users")
+  }
 
 model Transaction {
-  id          String   @id @default(uuid())
-  userId      String
-  amount      Float
-  type        String   // "INCOME" atau "EXPENSE"
-  category    String   // Contoh: "Food", "Salary", "Transport"
-  description String?
-  user        User     @relation(fields: [userId], references: [id])
-  createdAt   DateTime @default(now())
-}
-
-model Order {
-  id        String   @id @default(uuid())
-  userId    String
-  foodId    String
-  status    String   @default("PENDING") // PENDING, ON_THE_WAY, DELIVERED
-  total     Float
-  user      User     @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())
+  id            String   @id @default(uuid())
+  userId        String
+  amount        Float
+  balanceBefore Float    
+  balanceAfter  Float    
+  type          String   
+  category      String   
+  description   String?
+  user          User     @relation(fields: [userId], references: [id])
+  createdAt     DateTime @default(now())
 }

@@ -1,10 +1,12 @@
-import { Controller, Post, Body, UseGuards, Get, Request } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get, Req } from '@nestjs/common';
+import { Request } from 'express'; 
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { RolesGuard } from './roles.guard';
 import { Roles } from './roles.decorator';
 import { Role } from '@prisma/client';
 import { CreateUserDto } from '../users/dto/create-user.dto';
+
 
 @Controller('auth')
 export class AuthController {
@@ -24,11 +26,11 @@ async register(@Body() createUserDto: CreateUserDto) {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.USER)
   @Get('user-dashboard')
-  getProfile(@Request() req) {
+  getProfile(@Req() req: Request) {
     return { message: 'Selamat datang di Wallet', user: req.user };
   }
 
-  // Contoh Endpoint khusus ADMIN
+
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @Get('admin-stats')

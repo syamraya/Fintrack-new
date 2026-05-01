@@ -1,34 +1,39 @@
-import { ConflictException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateUserDto } from './dto/create-user.dto'; // Sesuaikan path-nya
-import * as bcrypt from 'bcrypt';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { Role } from '@prisma/client';
 
 @Injectable()
 export class UserService {
   constructor(private prisma: PrismaService) {}
 
-  async register(dto: CreateUserDto) {
-    try {
-      const hashedPassword = await bcrypt.hash(dto.password, 10);
-      const user = await this.prisma.user.create({
-        data: {
-          email: dto.email,
-          name: dto.name,
-          password: hashedPassword,
-          balance: 0, 
-        },
-      });
-      const { password, ...result } = user;
-      return {
-        message: 'Registrasi berhasil, bre!',
-        data: result,
-      };
-      
-    } catch (error: any) { 
-  if (error.code === 'P2002') {
-    throw new ConflictException('Email ini sudah terdaftar, pakai yang lain!');
+  // Cari satu user (Tanpa Password)
+  async findOne(id: string) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) throw new NotFoundException('User tidak ditemukan');
+    
+    const { password, ...result } = user;
+    return result;
   }
-  throw new InternalServerErrorException('Ada masalah di server, bre!');
-}
+
+  // Update profil atau saldo
+  async update(id: string, dto: UpdateUserDto) {
+    return this.prisma.user.update({
+      where: { id },
+      data: dto,
+      select: { id: true, name: true, email: true, balance: true }
+    });
+  }
+
+  // Update Role (Logic promosi admin)
+  async updateRole(id: string, newRole: Role) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) throw new NotFoundException('User target tidak ada, bre!');
+
+    return this.prisma.user.update({
+      where: { id },
+      data: { role: newRole },
+      select: { id: true, name: true, email: true, role: true }
+    });
   }
 }

@@ -17,7 +17,7 @@ import { JwtStrategy } from './jwt.strategy';
   controllers: [AuthController],
   providers: [
     AuthService, 
-    PrismaService, // 2. Masukkan ke sini agar AuthService bisa pakai
+    PrismaService, 
     JwtStrategy
   ],
 })
