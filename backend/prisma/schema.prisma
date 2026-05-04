@@ -1,18 +1,11 @@
-// prisma/schema.prisma
-
-
 generator client {
   provider = "prisma-client-js"
 }
+
 datasource db {
-  provider = "postgresql" 
+  provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
-}
-
-enum Role {
-  USER
-  ADMIN
 }
 
 model User {
@@ -21,30 +14,37 @@ model User {
   password     String
   name         String?
   role         Role          @default(USER)
-  balance      Float         @default(0) // Saldo utama
-  transactions Transaction[]
-  orders       Order[]
+  balance      Float         @default(0)
   createdAt    DateTime      @default(now())
+  transactions Transaction[]
+
   @@map("users")
 }
 
 model Transaction {
-  id          String   @id @default(uuid())
-  userId      String
-  amount      Float
-  type        String   // "INCOME" atau "EXPENSE"
-  category    String   // Contoh: "Food", "Salary", "Transport"
-  description String?
-  user        User     @relation(fields: [userId], references: [id])
-  createdAt   DateTime @default(now())
+  id            String    @id @default(uuid())
+  userId        String
+  amount        Float
+  balanceBefore Float
+  balanceAfter  Float
+  type          String
+  categoryId    String
+  description   String?
+  createdAt     DateTime  @default(now())
+  user          User      @relation(fields: [userId], references: [id])
+  category      Category  @relation(fields: [categoryId], references: [id])
 }
 
-model Order {
-  id        String   @id @default(uuid())
-  userId    String
-  foodId    String
-  status    String   @default("PENDING") // PENDING, ON_THE_WAY, DELIVERED
-  total     Float
-  user      User     @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())
+enum Role {
+  USER
+  ADMIN
+}
+
+model Category {
+  id           String        @id @default(uuid())
+  name         String        @unique
+  createdAt    DateTime      @default(now())
+  transactions Transaction[]
+
+  @@map("categories")
 }

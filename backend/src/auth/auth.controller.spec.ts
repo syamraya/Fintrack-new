@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 
+// Tidak perlu import describe, it, beforeEach dari mana pun
 describe('AuthController', () => {
   let controller: AuthController;
 

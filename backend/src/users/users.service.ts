@@ -2,6 +2,7 @@ import { ConflictException, Injectable, InternalServerErrorException } from '@ne
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto'; // Sesuaikan path-nya
 import * as bcrypt from 'bcrypt';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UserService {
@@ -31,4 +32,27 @@ export class UserService {
   throw new InternalServerErrorException('Ada masalah di server, bre!');
 }
   }
+
+  async updateBalance(userId: string, dto: UpdateUserDto) {
+  const user = await this.prisma.user.update({
+    where: { id: userId },
+    data: { balance: dto.balance },
+  });
+  const { password, ...result } = user;
+  return result;
+  }
+  
+  async findOne(userId: string) {
+  const user = await this.prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      balance: true,
+      role: true,
+    },
+  });
+  return user;
+}
 }
