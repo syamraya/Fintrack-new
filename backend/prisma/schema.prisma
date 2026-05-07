@@ -1,4 +1,4 @@
-  // prisma/schema.prisma
+    // prisma/schema.prisma
 
 
   generator client {
@@ -29,21 +29,22 @@
 
 model Transaction {
   id            String   @id @default(uuid())
-  userId        String
   amount        Float
-  balanceBefore Float    
-  balanceAfter  Float    
   type          String   
-  category      String   
   description   String?
-  user          User     @relation(fields: [userId], references: [id])
+  userId        String
+  categoryId    String   
+  balanceBefore Float
+  balanceAfter  Float
   createdAt     DateTime @default(now())
-  @@map("transactions")
+
+
+  user          User     @relation(fields: [userId], references: [id])
+  category      Category @relation(fields: [categoryId], references: [id]) // Baris ini yang penting
 }
 
 model Category {
-  id        String   @id @default(uuid())
-  name      String   @unique
-  createdAt DateTime @default(now())
-  @@map("categories")
+  id           String        @id @default(uuid())
+  name         String        @unique
+  transactions Transaction[]
 }

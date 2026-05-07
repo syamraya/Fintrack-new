@@ -5,7 +5,8 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { TransactionsModule } from './transactions/transactions.module';
-
+import { CategoriesModule } from './categories/categories.module';
+import { MarketModule } from './market/market.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }), // Ini harus paling atas!
@@ -13,6 +14,8 @@ import { TransactionsModule } from './transactions/transactions.module';
     UsersModule,
     AuthModule,
     TransactionsModule,
+    CategoriesModule,
+    MarketModule,
   ],
 })
 export class AppModule {}
