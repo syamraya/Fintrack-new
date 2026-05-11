@@ -7,6 +7,9 @@ import { UsersModule } from './users/users.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { CategoriesModule } from './categories/categories.module';
 import { MarketModule } from './market/market.module';
+import { AnalyticsController } from './analytics/analytics.controller';
+import { AnalyticsModule } from './analytics/analytics.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }), // Ini harus paling atas!
@@ -16,6 +19,9 @@ import { MarketModule } from './market/market.module';
     TransactionsModule,
     CategoriesModule,
     MarketModule,
+    AnalyticsModule,
+    
+    
   ],
 })
 export class AppModule {}
