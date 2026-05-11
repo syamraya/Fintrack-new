@@ -3,7 +3,6 @@ import { MarketService } from './market.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('market')
-@UseGuards(JwtAuthGuard) // Agar hanya user login yang bisa lihat
 export class MarketController {
   constructor(private readonly marketService: MarketService) {}
 
@@ -12,14 +11,20 @@ export class MarketController {
     return this.marketService.getGoldPrice();
   }
 
+  @Get('crypto')
+  async getCrypto(@Query('coin') coin: string) {
+    const coinId = coin || 'bitcoin';
+    return this.marketService.getCryptoPrice(coinId);
+  }
+
   @Get('news')
+  @UseGuards(JwtAuthGuard) // hanya ini yang perlu login
   async getNews() {
     return this.marketService.getGoldNews();
   }
 
-  @Get('crypto')
- async getCrypto(@Query('coin') coin: string) {
-  const coinId = coin || 'bitcoin'; 
-  return this.marketService.getCryptoPrice(coinId);
-}
+  @Get('analytics')
+  getAnalytics() {
+    return this.marketService.getAnalytics();
+  }
 }
