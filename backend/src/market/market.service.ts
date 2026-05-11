@@ -8,6 +8,36 @@ export class MarketService {
   private readonly baseUrl = 'https://www.goldapi.io/api/XAU/USD';
   getGoldNews: any;
 
+  async getCryptoPrice(coinId: string = 'bitcoin') {
+  try {
+    const response = await axios.get('https://api.coingecko.com/api/v3/simple/price', {
+      params: {
+        ids: coinId,
+        vs_currencies: 'usd,idr', // Kita ambil USD dan IDR sekaligus
+        include_24hr_change: 'true',
+        include_last_updated_at: 'true',
+      },
+    });
+
+    const data = response.data[coinId.toLowerCase()];
+    
+    if (!data) {
+      throw new Error('Koin tidak ditemukan, bre!');
+    }
+
+    return {
+      symbol: coinId.toUpperCase(),
+      price_usd: data.usd,
+      price_idr: data.idr,
+      change_24h: data.usd_24h_change,
+      last_updated: new Date(data.last_updated_at * 1000).toISOString(),
+    };
+  } catch (error: any) {
+    this.logger.error(`Gagal ambil harga Crypto (${coinId}): ${error.message}`);
+    throw new InternalServerErrorException('Gagal mengambil data crypto, pastikan ID koin benar.');
+  }
+}
+
   async getGoldPrice() {
     const apiKey = process.env.GOLD_API_KEY;
 

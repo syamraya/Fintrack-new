@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { MarketService } from './market.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -16,4 +16,10 @@ export class MarketController {
   async getNews() {
     return this.marketService.getGoldNews();
   }
+
+  @Get('crypto')
+ async getCrypto(@Query('coin') coin: string) {
+  const coinId = coin || 'bitcoin'; 
+  return this.marketService.getCryptoPrice(coinId);
+}
 }
