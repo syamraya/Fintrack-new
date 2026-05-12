@@ -21,7 +21,7 @@
     password     String
     name         String?
     role         Role          @default(USER)
-    balance      Float         @default(0) // Saldo utama
+    balance      Float         @default(0) 
     transactions Transaction[]
     createdAt    DateTime      @default(now())
     @@map("users")
@@ -40,7 +40,7 @@ model Transaction {
 
 
   user          User     @relation(fields: [userId], references: [id])
-  category      Category @relation(fields: [categoryId], references: [id]) // Baris ini yang penting
+  category      Category @relation(fields: [categoryId], references: [id]) 
 }
 
 model Category {

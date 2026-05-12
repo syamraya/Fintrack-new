@@ -18,13 +18,17 @@ export class MarketController {
   }
 
   @Get('news')
-  @UseGuards(JwtAuthGuard) // hanya ini yang perlu login
+  @UseGuards(JwtAuthGuard)
   async getNews() {
     return this.marketService.getGoldNews();
   }
 
   @Get('analytics')
-  getAnalytics() {
-    return this.marketService.getAnalytics();
+  async getAnalytics(
+    @Query('symbol') symbol: string = 'BTCUSDT',
+    @Query('interval') interval: string = '5m',
+    @Query('limit') limit: string = '20',
+  ) {
+    return this.marketService.getAnalytics(symbol, interval, parseInt(limit));
   }
 }
