@@ -9,6 +9,7 @@ import { CategoriesModule } from './categories/categories.module';
 import { MarketModule } from './market/market.module';
 import { AnalyticsController } from './analytics/analytics.controller';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { SavingGoalsModule } from './saving-goals/saving-goals.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
     CategoriesModule,
     MarketModule,
     AnalyticsModule,
+    SavingGoalsModule,
     
     
   ],
