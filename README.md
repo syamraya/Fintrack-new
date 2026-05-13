@@ -1,4 +1,7 @@
 new update fitur saving-goal 
+
+
+
 DATABASE_URL="postgresql://postgres.yekeegttsbbzwbkrvzyj:FintrackAdmin$@aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres"
 DIRECT_URL="postgresql://postgres.yekeegttsbbzwbkrvzyj:FintrackAdmin$@aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres"
 JWT_SECRET="FintrackSecretKey123"
