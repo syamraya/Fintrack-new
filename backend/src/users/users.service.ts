@@ -1,13 +1,44 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, InternalServerErrorException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { FilesService } from '../files/files.service'; // Pastikan path-nya benar
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Role } from '@prisma/client';
 
 @Injectable()
 export class UserService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(UserService.name);
 
-  // Cari satu user (Tanpa Password)
+  constructor(
+    private prisma: PrismaService,
+    private filesService: FilesService, 
+  ) {}
+
+async updateAvatar(userId: string, avatarUrl: string) { 
+    try {
+      const updatedUser = await this.prisma.user.update({
+        where: { id: userId },
+        data: { avatarUrl }, 
+        select: { 
+          id: true, 
+          name: true, 
+          email: true, 
+          avatarUrl: true 
+        },
+      });
+      return {
+        message: 'Foto profil berhasil diupdate!',
+        data: updatedUser,
+      };
+    } catch (error: any) {
+      this.logger.error(`Gagal update database user ${userId}: ${error.message}`);
+      
+      if (error.code === 'P2025') {
+        throw new NotFoundException('User tidak ditemukan di database.');
+      }
+
+      throw new InternalServerErrorException('Gagal menyimpan URL foto ke database.');
+    }
+  }
   async findOne(id: string) {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException('User tidak ditemukan');
@@ -16,16 +47,14 @@ export class UserService {
     return result;
   }
 
-  // Update profil atau saldo
   async update(id: string, dto: UpdateUserDto) {
     return this.prisma.user.update({
       where: { id },
       data: dto,
-      select: { id: true, name: true, email: true, balance: true }
+      select: { id: true, name: true, email: true, balance: true, avatarUrl: true }
     });
   }
 
-  // Update Role (Logic promosi admin)
   async updateRole(id: string, newRole: Role) {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException('User target tidak ada, bre!');
