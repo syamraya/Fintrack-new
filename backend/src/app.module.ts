@@ -10,6 +10,7 @@ import { MarketModule } from './market/market.module';
 import { AnalyticsController } from './analytics/analytics.controller';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { SavingGoalsModule } from './saving-goals/saving-goals.module';
+import { RecurrentTransactionsModule } from './recurrent-transactions/recurrent-transactions.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { SavingGoalsModule } from './saving-goals/saving-goals.module';
     MarketModule,
     AnalyticsModule,
     SavingGoalsModule,
+    RecurrentTransactionsModule,
     
     
   ],

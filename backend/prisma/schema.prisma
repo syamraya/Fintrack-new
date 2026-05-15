@@ -60,8 +60,9 @@ model SavingGoal {
   targetAmount  Float     
   currentAmount Float     @default(0) 
   category      String    @default("Lainnya") 
-  
   deadline      DateTime? 
+  isRecurrent     Boolean   @default(false)
+  recurrentAmount Float     @default(0)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   userId        String
@@ -73,9 +74,10 @@ model SavingGoal {
 model RecurrentTransaction {
   id          String    @id @default(uuid())
   userId      String
+  name        String
   amount      Float
   type        TransactionType 
-  category    String
+  categoryId  String
   description String?
   frequency   String    
   startDate   DateTime  @default(now())

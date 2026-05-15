@@ -45,26 +45,44 @@ async deposit(userId: string, goalId: string, dto: AddDepositDto) {
   const goal = await this.prisma.savingGoal.findFirst({
     where: { id: goalId, userId: userId }
   });
-
   if (!goal) throw new NotFoundException('Target tabungan tidak ditemukan!');
+
   const user = await this.prisma.user.findUnique({ where: { id: userId } });
-  if (user.balance < amount) {
-    throw new BadRequestException('Saldo kamu tidak cukup untuk menabung segini, bre!');
+  if (!user || user.balance < amount) {
+    throw new BadRequestException('Saldo kamu tidak cukup, bre!');
+  }
+  let category = await this.prisma.category.findUnique({ where: { name: 'Tabungan' } });
+  if (!category) {
+    category = await this.prisma.category.create({ data: { name: 'Tabungan' } });
   }
 
   return this.prisma.$transaction(async (tx) => {
+    const balanceBefore = user.balance;
+    const balanceAfter = balanceBefore - amount;
+
     await tx.user.update({
       where: { id: userId },
-      data: { balance: { decrement: amount } }
+      data: { balance: balanceAfter }
     });
     const updatedGoal = await tx.savingGoal.update({
       where: { id: goalId },
       data: { currentAmount: { increment: amount } }
     });
+    await tx.transaction.create({
+      data: {
+        amount,
+        type: 'EXPENSE',
+        description: `Nabung: ${goal.name}`,
+        userId,
+        categoryId: category.id,
+        balanceBefore,
+        balanceAfter
+      }
+    });
 
     return {
       message: `Berhasil nabung Rp ${amount.toLocaleString()} buat ${goal.name}!`,
-      currentBalance: user.balance - amount,
+      currentBalance: balanceAfter,
       goalDetails: updatedGoal
     };
   });
