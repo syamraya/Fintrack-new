@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { AddDepositDto, CreateSavingGoalDto } from "./dto/create-saving-goal.dto";
 import { PrismaService } from "src/prisma/prisma.service";
-import { Prisma } from "@prisma/client";
+import { Prisma,TransactionType  } from "@prisma/client";
 
 @Injectable()
 export class SavingGoalsService {
@@ -53,7 +53,7 @@ async deposit(userId: string, goalId: string, dto: AddDepositDto) {
   }
   let category = await this.prisma.category.findUnique({ where: { name: 'Tabungan' } });
   if (!category) {
-    category = await this.prisma.category.create({ data: { name: 'Tabungan' } });
+    category = await this.prisma.category.create({ data: { name: 'Tabungan', type: TransactionType.EXPENSE } });
   }
 
   return this.prisma.$transaction(async (tx) => {

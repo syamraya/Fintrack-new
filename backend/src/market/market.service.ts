@@ -46,42 +46,50 @@ export class MarketService {
     }
   }
 
-  async getGoldPrice() {
-    const apiKey = process.env.GOLD_API_KEY;
+async getGoldPrice() {
+  const apiKey = process.env.GOLD_API_KEY;
 
-    try {
-      const response = await axios.get(this.baseUrl, {
-        headers: {
-          'x-access-token': apiKey,
-          'Content-Type': 'application/json',
-        },
-      });
+  try {
+    const response = await axios.get(this.baseUrl, {
+      headers: {
+        'x-access-token': apiKey,
+        'Content-Type': 'application/json',
+      },
+    });
 
-      if (!response.data || response.data.error) {
-        this.logger.error(
-          `GoldAPI Error: ${response.data?.error || 'Unknown Error'}`,
-        );
-        throw new InternalServerErrorException(
-          `GoldAPI error: ${response.data?.error || 'Unknown Error'}`,
-        );
-      }
+    const data = response.data;
 
-      return {
-        from: 'XAU',
-        to: 'USD',
-        price: response.data.price,
-        high: response.data.high,
-        low: response.data.low,
-        lastRefreshed: new Date(response.data.timestamp * 1000).toISOString(),
-        isMock: false,
-      };
-    } catch (error: any) {
-      this.logger.error(`GoldAPI Crash: ${error.message}`);
+    if (!data || data.error) {
       throw new InternalServerErrorException(
-        'Data gold tidak tersedia saat ini.',
+        `GoldAPI error: ${data?.error || 'Unknown Error'}`,
       );
     }
+
+    const isMarketClosed = !data.price || data.price === 0;
+
+    return {
+      from: 'XAU',
+      to: 'USD',
+      price: data.price ?? null,
+      high: data.high ?? null,
+      low: data.low ?? null,
+      prev_close_price: data.prev_close_price ?? null,
+      lastRefreshed: data.timestamp
+        ? new Date(data.timestamp * 1000).toISOString()
+        : null,
+      isMock: false,
+      marketStatus: isMarketClosed ? 'closed' : 'open',
+      message: isMarketClosed
+        ? 'Market emas sedang tutup, menampilkan harga terakhir.'
+        : null,
+    };
+  } catch (error: any) {
+    this.logger.error(`GoldAPI Crash: ${error.message}`);
+    throw new InternalServerErrorException(
+      'Data gold tidak tersedia saat ini.',
+    );
   }
+}
 
   async getAnalytics(
     symbol: string = 'BTCUSDT',

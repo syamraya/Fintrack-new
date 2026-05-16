@@ -11,6 +11,8 @@ import { AnalyticsController } from './analytics/analytics.controller';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { SavingGoalsModule } from './saving-goals/saving-goals.module';
 import { RecurrentTransactionsModule } from './recurrent-transactions/recurrent-transactions.module';
+import { MailModule } from './mail/mail.module';
+
 
 @Module({
   imports: [
@@ -24,6 +26,7 @@ import { RecurrentTransactionsModule } from './recurrent-transactions/recurrent-
     AnalyticsModule,
     SavingGoalsModule,
     RecurrentTransactionsModule,
+    MailModule,
     
     
   ],
