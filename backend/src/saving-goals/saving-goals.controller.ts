@@ -15,6 +15,7 @@ export class SavingGoalsController {
 
   @Get()
   findAll(@Req() req: any) {
+    const id = req.user.userId;
     return this.savingGoalsService.findAll(req.user.userId);
   }
 
