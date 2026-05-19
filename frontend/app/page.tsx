@@ -3,6 +3,8 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 
+import { useRouter } from "next/navigation";
+
 import MarketCard from "@/components/landing/market-card";
 import { getGoldPrice, getBTCPrice } from "@/services/market.service";
 
@@ -12,6 +14,8 @@ export default function LandingPage() {
   const [analytics, setAnalytics] = useState<any>(null);
   const [loadingAnalytics, setLoadingAnalytics] = useState(true);
   const [currentTime, setCurrentTime] = useState("");
+
+  const router = useRouter();
 
   // Dynamic Market
   const [marketValue, setMarketValue] = useState(137000000000);
@@ -81,46 +85,45 @@ export default function LandingPage() {
   }, []);
 
   useEffect(() => {
-  let mounted = true;
+    let mounted = true;
 
-  const fetchAnalytics = async () => {
-    try {
-      setLoadingAnalytics(true);
+    const fetchAnalytics = async () => {
+      try {
+        setLoadingAnalytics(true);
 
-      const data = await getAnalytics();
+        const data = await getAnalytics();
 
-      if (!mounted || !data) return;
+        if (!mounted || !data) return;
 
-      // ❌ jangan pakai prev comparison lagi
-      setAnalytics({
-        sentiment: data.sentiment,
-        trendScore: data.trendScore,
-        volatility: data.volatility,
-      });
-    } catch (err) {
-      console.error("Analytics error:", err);
+        setAnalytics({
+          sentiment: data.sentiment,
+          trendScore: data.trendScore,
+          volatility: data.volatility,
+        });
+      } catch (err) {
+        console.error("Analytics error:", err);
 
-      if (!mounted) return;
+        if (!mounted) return;
 
-      setAnalytics({
-        sentiment: "Neutral",
-        trendScore: 50,
-        volatility: 50,
-      });
-    } finally {
-      if (mounted) setLoadingAnalytics(false);
-    }
-  };
+        setAnalytics({
+          sentiment: "Neutral",
+          trendScore: 50,
+          volatility: 50,
+        });
+      } finally {
+        if (mounted) setLoadingAnalytics(false);
+      }
+    };
 
-  fetchAnalytics();
+    fetchAnalytics();
 
-  const interval = setInterval(fetchAnalytics, 10000);
+    const interval = setInterval(fetchAnalytics, 10000);
 
-  return () => {
-    mounted = false;
-    clearInterval(interval);
-  };
-}, []);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-white text-slate-900">
@@ -165,7 +168,11 @@ export default function LandingPage() {
         </div>
 
         {/* CTA */}
-        <button className="px-5 py-2.5 rounded-2xl bg-slate-900 text-white text-sm font-semibold hover:scale-[1.02] transition-all">
+        <button
+          suppressHydrationWarning
+          onClick={() => router.push("/sign-in")}
+          className="px-5 py-2.5 rounded-2xl bg-slate-900 text-white text-sm font-semibold hover:scale-[1.02] transition-all"
+        >
           Get Started
         </button>
       </nav>
@@ -205,11 +212,18 @@ export default function LandingPage() {
 
             {/* CTA */}
             <div className="mt-10 flex flex-wrap items-center gap-5">
-              <button className="px-8 py-4 rounded-2xl bg-indigo-600 text-white font-semibold shadow-[0_10px_40px_rgba(79,70,229,0.25)] hover:scale-[1.02] hover:bg-indigo-500 transition-all">
+              <button
+                suppressHydrationWarning
+                onClick={() => router.push("/sign-in")}
+                className="px-8 py-4 rounded-2xl bg-indigo-600 text-white font-semibold shadow-[0_10px_40px_rgba(79,70,229,0.25)] hover:scale-[1.02] hover:bg-indigo-500 transition-all"
+              >
                 Get Started
               </button>
 
-              <button className="text-slate-600 font-semibold hover:text-slate-900 transition-colors">
+              <button
+                suppressHydrationWarning
+                className="text-slate-600 font-semibold hover:text-slate-900 transition-colors"
+              >
                 View Demo
               </button>
             </div>
@@ -360,7 +374,8 @@ export default function LandingPage() {
                           {title}
                         </p>
 
-                        <p className="text-xs text-slate-400 mt-1">
+                        {/* suppressHydrationWarning: currentTime is "" on server, time string on client */}
+                        <p suppressHydrationWarning className="text-xs text-slate-400 mt-1">
                           {currentTime}
                         </p>
                       </div>
@@ -496,7 +511,7 @@ export default function LandingPage() {
                 </p>
 
                 <h3 className="text-2xl font-black mt-2">
-                  Market Sentiment:
+                  Market Sentiment:{" "}
                   {loadingAnalytics ? "Loading..." : analytics?.sentiment}
                 </h3>
 
@@ -541,7 +556,10 @@ export default function LandingPage() {
                 portfolios, monitor markets, and grow wealth.
               </p>
 
-              <button className="mt-10 px-8 py-4 rounded-2xl bg-white text-slate-900 font-bold hover:scale-[1.02] transition-all">
+              <button
+                suppressHydrationWarning
+                className="mt-10 px-8 py-4 rounded-2xl bg-white text-slate-900 font-bold hover:scale-[1.02] transition-all"
+              >
                 Get Started Now
               </button>
             </div>
@@ -584,7 +602,7 @@ export default function LandingPage() {
                 </a>
 
                 <a
-                  href="#"
+                  href=""
                   className="block hover:text-slate-900 transition-colors"
                 >
                   Markets
@@ -654,12 +672,16 @@ export default function LandingPage() {
 
               <div className="flex items-center gap-2">
                 <input
+                  suppressHydrationWarning
                   type="email"
                   placeholder="Enter email"
                   className="w-full px-4 py-3 rounded-2xl border border-slate-200 bg-white text-sm outline-none focus:ring-2 focus:ring-indigo-500"
                 />
 
-                <button className="px-5 py-3 rounded-2xl bg-slate-900 text-white text-sm font-semibold hover:scale-[1.02] transition-all">
+                <button
+                  suppressHydrationWarning
+                  className="px-5 py-3 rounded-2xl bg-slate-900 text-white text-sm font-semibold hover:scale-[1.02] transition-all"
+                >
                   Join
                 </button>
               </div>

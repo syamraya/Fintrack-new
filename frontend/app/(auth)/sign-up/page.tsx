@@ -1,198 +1,181 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { useState } from "react";
-import { 
-  Droplets, 
-  Lock, 
-  User, 
-  Phone, 
-  UserPlus, 
-  ArrowLeft, 
-  Loader2,
-  Eye,
-  EyeOff 
-} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import Link from "next/link";
 
 export default function SignUpPage() {
-  const [username, setUsername] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [name, setName] = useState<string>("");
-  const [phone, setPhone] = useState<string>("");
-  const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
 
-  async function handleSignUp(e: React.FormEvent) {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
 
+    const form = e.currentTarget;
+    const name = (form.elements.namedItem("name") as HTMLInputElement).value;
+    const email = (form.elements.namedItem("email") as HTMLInputElement).value;
+    const password = (form.elements.namedItem("password") as HTMLInputElement).value;
+
     try {
-      const request = JSON.stringify({ username, password, name, phone });
-      const url = `${process.env.NEXT_PUBLIC_BASE_API_URL}/admins`;
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "APP-KEY": `${process.env.NEXT_PUBLIC_APP_KEY}`,
-        },
-        body: request,
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_API_URL}/auth/register`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, password }),
+        }
+      );
 
-      const responseData = await response.json();
+      const data = await res.json();
 
-      if (!response.ok) {
-        toast.error(responseData.message || "Gagal melakukan registrasi");
-        setIsLoading(false);
-        return;
+      if (!res.ok) {
+        throw new Error(data.message || "Registrasi gagal");
       }
 
-      toast.success("Registrasi Berhasil! Silakan masuk.");
-      
-      // Beri jeda agar user bisa baca toast sebelum pindah ke login
-      setTimeout(() => {
-        router.push("/sign-in");
-      }, 1500);
-
-    } catch (error) {
-      console.error("Error during sign up:", error);
-      toast.error("Terjadi kesalahan koneksi ke server.");
+      // register tidak return access_token, redirect ke sign-in
+      alert(data.message);
+      router.push("/sign-in");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Terjadi kesalahan";
+      alert(message);
+    } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-6 relative overflow-hidden">
-      {/* Background Decor */}
-      <div className="absolute top-0 left-0 -z-10 w-1/2 h-1/2 bg-blue-50 rounded-full blur-3xl opacity-50 transform -translate-x-1/2 -translate-y-1/2"></div>
-      <div className="absolute bottom-0 right-0 -z-10 w-1/2 h-1/2 bg-cyan-50 rounded-full blur-3xl opacity-50 transform translate-x-1/2 translate-y-1/2"></div>
+    <main className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-white selection:bg-indigo-100">
+      {/* LEFT SIDE */}
+      <div className="relative hidden lg:flex flex-col items-start justify-between bg-[#0F172A] p-12 overflow-hidden">
+        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-600/20 blur-[120px] rounded-full animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[400px] h-[400px] bg-violet-600/20 blur-[100px] rounded-full animate-bounce" />
 
-      <div className="w-full max-w-[500px] animate-in fade-in zoom-in duration-500">
-        {/* Back Link */}
-        <a 
-          href="/sign-in" 
-          className="inline-flex items-center gap-2 text-slate-400 hover:text-blue-600 transition-colors mb-6 font-semibold text-sm group"
+        <div className="relative z-10 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+            <span className="text-white font-black text-xl">FT</span>
+          </div>
+          <span className="text-white font-bold text-2xl tracking-tight">FinTrack</span>
+        </div>
+
+        <div className="relative z-10 max-w-lg">
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-5xl font-black text-white leading-[1.1] tracking-tight"
+          >
+            The future of <br />
+            <span className="text-indigo-400">wealth tracking</span> is here.
+          </motion.h1>
+          <p className="mt-6 text-slate-400 text-lg leading-relaxed font-medium">
+            Join 2.4M+ users who manage their portfolio with real-time data, AI
+            insights, and institutional-grade security.
+          </p>
+
+          <div className="mt-12 space-y-6">
+            {[
+              "Institutional-grade security",
+              "Real-time market analytics",
+              "Multi-asset portfolio management",
+            ].map((text, i) => (
+              <div key={i} className="flex items-center gap-3 text-slate-300 font-medium">
+                <div className="w-5 h-5 rounded-full bg-indigo-500/20 flex items-center justify-center">
+                  <div className="w-2 h-2 rounded-full bg-indigo-400" />
+                </div>
+                {text}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="relative z-10 text-slate-500 text-sm font-medium">
+          © 2026 FinTrack Inc. All rights reserved.
+        </div>
+      </div>
+
+      {/* RIGHT SIDE */}
+      <div className="flex flex-col items-center justify-center p-8 lg:p-24 relative">
+        <div className="lg:hidden absolute top-8 left-8 flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center">
+            <span className="text-white font-black text-sm">FT</span>
+          </div>
+          <span className="font-bold text-xl">FinTrack</span>
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-md"
         >
-          <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
-          Sudah punya akun? Login
-        </a>
-
-        <div className="bg-white p-8 md:p-10 rounded-[40px] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.06)] border border-slate-100">
-          <div className="flex flex-col items-center mb-8">
-            <div className="bg-blue-600 p-3 rounded-2xl shadow-lg shadow-blue-200 mb-4">
-              <UserPlus className="text-white" size={32} />
-            </div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tight">
-              Daftar <span className="text-blue-600">Admin</span>
-            </h1>
-            <p className="text-slate-400 text-sm mt-2 text-center">
-              Lengkapi data di bawah untuk membuat akun manajemen PDAM.
+          <div className="mb-10">
+            <h2 className="text-4xl font-black text-slate-900 tracking-tight">
+              Create an account
+            </h2>
+            <p className="text-slate-500 mt-3 font-medium">
+              Already have an account?{" "}
+              <Link
+                href="/sign-in"
+                className="text-indigo-600 hover:text-indigo-700 font-bold underline underline-offset-4"
+              >
+                Sign in
+              </Link>
             </p>
           </div>
 
-          <form className="space-y-5" onSubmit={handleSignUp}>
-            {/* Input Name */}
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-black uppercase tracking-[0.1em] text-slate-400 ml-1">
-                Nama Lengkap
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-sm text-slate-700 font-bold ml-1">
+                Full Name
               </label>
-              <div className="relative group">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={18} />
-                <input
-                  type="text"
-                  placeholder="Masukkan nama lengkap"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-[18px] focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:bg-white transition-all text-slate-800 placeholder:text-slate-300 font-medium text-sm"
-                  required
-                />
-              </div>
+              <input
+                name="name"
+                type="text"
+                required
+                placeholder="John Doe"
+                className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-semibold shadow-sm"
+              />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Input Username */}
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-black uppercase tracking-[0.1em] text-slate-400 ml-1">
-                  Username
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="Username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="w-full px-4 py-3.5 bg-slate-50 border border-slate-100 rounded-[18px] focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:bg-white transition-all text-slate-800 placeholder:text-slate-300 font-medium text-sm"
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Input Phone */}
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-black uppercase tracking-[0.1em] text-slate-400 ml-1">
-                  Nomor HP
-                </label>
-                <div className="relative group">
-                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={18} />
-                  <input
-                    type="text"
-                    placeholder="0812..."
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-[18px] focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:bg-white transition-all text-slate-800 placeholder:text-slate-300 font-medium text-sm"
-                    required
-                  />
-                </div>
-              </div>
+            <div className="space-y-2">
+              <label className="text-sm text-slate-700 font-bold ml-1">
+                Email Address
+              </label>
+              <input
+                name="email"
+                type="email"
+                required
+                placeholder="name@company.com"
+                className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-semibold shadow-sm"
+              />
             </div>
 
-            {/* Input Password */}
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-black uppercase tracking-[0.1em] text-slate-400 ml-1">
+            <div className="space-y-2">
+              <label className="text-sm text-slate-700 font-bold ml-1">
                 Password
               </label>
-              <div className="relative group">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={18} />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Buat password kuat"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-11 pr-12 py-3.5 bg-slate-50 border border-slate-100 rounded-[18px] focus:outline-none focus:ring-2 focus:ring-blue-500/10 focus:bg-white transition-all text-slate-800 placeholder:text-slate-300 font-medium text-sm"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
+              <input
+                name="password"
+                type="password"
+                required
+                placeholder="••••••••"
+                className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-semibold shadow-sm"
+              />
             </div>
 
             <button
-              type="submit"
               disabled={isLoading}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-[20px] font-bold shadow-lg shadow-blue-100 transition-all active:scale-[0.98] flex items-center justify-center gap-2 mt-2"
+              className="w-full py-4 rounded-2xl font-bold text-white bg-slate-900 hover:bg-slate-800 shadow-xl shadow-slate-200 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {isLoading ? (
-                <Loader2 className="animate-spin" size={20} />
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
-                "Buat Akun Sekarang"
+                "Create Account"
               )}
             </button>
           </form>
-
-          <div className="mt-8 text-center">
-             <p className="text-xs text-slate-400 leading-relaxed">
-               Dengan mendaftar, Anda menyetujui <br /> 
-               <span className="font-bold text-slate-500 underline cursor-pointer">Syarat & Ketentuan</span> Fintrack.
-             </p>
-          </div>
-        </div>
+        </motion.div>
       </div>
-    </div>
+    </main>
   );
 }
