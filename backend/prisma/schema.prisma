@@ -50,6 +50,7 @@ model Transaction {
 model Category {
   id           String        @id @default(uuid())
   name         String        @unique
+  type         TransactionType 
   transactions Transaction[]
 }
 
@@ -86,6 +87,17 @@ model RecurrentTransaction {
 
   user        User      @relation(fields: [userId], references: [id])
 }
+
+model PasswordReset {
+  id        String   @id @default(uuid())
+  email     String   
+  otp       String   
+  expiresAt DateTime 
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
 
 enum TransactionType {
   INCOME

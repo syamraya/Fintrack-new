@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
-import { PrismaService } from '../prisma/prisma.service'; // 1. Import ini
+import { PrismaService } from '../prisma/prisma.service';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './jwt.strategy';
@@ -20,5 +20,6 @@ import { JwtStrategy } from './jwt.strategy';
     PrismaService, 
     JwtStrategy
   ],
+  exports: [AuthService], 
 })
 export class AuthModule {}

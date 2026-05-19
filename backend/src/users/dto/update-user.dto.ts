@@ -11,11 +11,15 @@ export class UpdateUserDto {
 
   @IsOptional()
   @IsString()
+  oldPassword?: string; // 🔥 Tambahkan ini untuk verifikasi password lama
+
+  @IsOptional()
+  @IsString()
   @MinLength(6, { message: 'Password baru minimal 6 karakter' })
-  password?: string;
+  password?: string; // Ini akan dianggap sebagai password baru
 
   @IsOptional()
   @IsNumber()
   @Min(0, { message: 'Saldo tidak boleh negatif' })
-  balance?: number; // Sesuai permintaanmu, user boleh update balance sendiri
+  balance?: number; 
 }
