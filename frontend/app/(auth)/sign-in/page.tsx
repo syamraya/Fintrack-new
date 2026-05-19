@@ -39,13 +39,18 @@ export default function SignInPage() {
       }
 
       if (result?.ok) {
-        // Fetch session untuk cek role, lalu redirect
+        // Fetch session untuk cek role
         const sessionRes = await fetch("/api/auth/session");
         const session    = await sessionRes.json();
         const role       = session?.user?.role;
 
-        router.push(role === "ADMIN" ? "/admin/dashboard" : callbackUrl);
-        router.refresh();
+        // ✅ FIX: Hapus router.refresh() — menyebabkan race condition
+        // Redirect langsung sesuai role
+        if (role === "ADMIN") {
+          router.push("/admin");
+        } else {
+          router.push(callbackUrl);
+        }
       }
     } catch {
       setError("Terjadi kesalahan koneksi. Pastikan server aktif.");
@@ -254,4 +259,3 @@ export default function SignInPage() {
     </div>
   );
 }
-

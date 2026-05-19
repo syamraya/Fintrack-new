@@ -137,10 +137,12 @@ function CreateGoalModal({
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          name: form.name,
-          targetAmount: Number(form.targetAmount),
-          category: form.category || undefined,
-          deadline: form.deadline || undefined,
+              name: form.name,
+              targetAmount: Number(form.targetAmount),
+              category: form.category || undefined,
+              deadline: form.deadline
+                ? new Date(form.deadline).toISOString()
+                : undefined,
         }),
       });
 

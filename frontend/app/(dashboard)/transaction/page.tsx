@@ -68,145 +68,238 @@ function TransactionModal({
 }) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingCategory, setLoadingCategory] = useState(false);
+
   const [type, setType] = useState<"INCOME" | "EXPENSE">("EXPENSE");
 
+  const [amount, setAmount] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [description, setDescription] = useState("");
+
+  const [error, setError] = useState("");
+
+  // ─────────────────────────────────────────────
+  // FETCH CATEGORY BERDASARKAN TYPE
+  // ─────────────────────────────────────────────
   useEffect(() => {
     if (!token) return;
-    fetchWithToken(token, "/categories").then((data) => {
-      if (Array.isArray(data)) setCategories(data);
-    });
-  }, [token]);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    const fetchCategories = async () => {
+      setLoadingCategory(true);
+
+      try {
+        const data = await fetchWithToken(
+          token,
+          `/categories?type=${type}`,
+        );
+
+        if (Array.isArray(data)) {
+          setCategories(data);
+        } else {
+          setCategories([]);
+        }
+
+        // reset selected category saat type berubah
+        setCategoryId("");
+      } catch {
+        setCategories([]);
+      } finally {
+        setLoadingCategory(false);
+      }
+    };
+
+    fetchCategories();
+  }, [token, type]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    setError("");
+
+    if (!amount || Number(amount) <= 0) {
+      setError("Jumlah tidak valid");
+      return;
+    }
+
+    if (!categoryId) {
+      setError("Pilih kategori");
+      return;
+    }
+
     setIsLoading(true);
-    const form = e.currentTarget;
-    const amount = Number(
-      (form.elements.namedItem("amount") as HTMLInputElement).value,
-    );
-    const category = (form.elements.namedItem("category") as HTMLSelectElement)
-      .value;
-    const description = (
-      form.elements.namedItem("description") as HTMLInputElement
-    ).value;
+
     try {
-      const data = await fetchWithToken(token, "/transactions", {
+      await fetchWithToken(token, "/transactions", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount, type, category, description }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          amount: Number(amount),
+          type,
+          category: categoryId,
+          description,
+        }),
       });
-      // assume API returns error structure when failed
+
       onSuccess();
       onClose();
-    } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Terjadi kesalahan");
+    } catch (err: any) {
+      setError(err?.message || "Gagal membuat transaksi");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Shared input style — bg-white eksplisit agar tidak transparan
   const inputCls =
     "w-full px-4 py-3.5 rounded-2xl border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-semibold text-[14px]";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* BACKDROP */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-black/20 backdrop-blur-sm"
         onClick={onClose}
+        className="absolute inset-0 bg-black/30 backdrop-blur-sm"
       />
+
+      {/* MODAL */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 10 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 10 }}
-        className="relative bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl shadow-blue-100/50 z-10"
+        initial={{ opacity: 0, y: 10, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 10, scale: 0.96 }}
+        className="relative z-10 w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl shadow-blue-100"
       >
+        {/* HEADER */}
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-slate-800 font-black text-[18px]">
-            Transaksi Baru
-          </h2>
+          <div>
+            <h2 className="text-[20px] font-black text-slate-800">
+              Tambah Transaksi
+            </h2>
+            <p className="text-[12px] text-slate-400 font-medium mt-1">
+              Catat income atau expense baru
+            </p>
+          </div>
+
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 transition-colors"
+            className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700 transition-colors"
           >
-            <FiX size={20} />
+            <FiX size={18} />
           </button>
         </div>
 
-        {/* Type toggle */}
-        <div className="flex gap-2 mb-6 p-1 bg-slate-50 rounded-2xl">
-          {(["EXPENSE", "INCOME"] as const).map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => setType(t)}
-              className={`flex-1 py-2.5 rounded-xl text-[13px] font-black transition-all ${
-                type === t
-                  ? t === "INCOME"
-                    ? "bg-blue-600 text-white shadow-md shadow-blue-200"
-                    : "bg-slate-800 text-white shadow-md shadow-slate-200"
-                  : "text-slate-400 hover:text-slate-600"
-              }`}
-            >
-              {t === "INCOME" ? "💰 Income" : "💸 Expense"}
-            </button>
-          ))}
+        {/* TOGGLE */}
+        <div className="grid grid-cols-2 gap-2 mb-6">
+          <button
+            type="button"
+            onClick={() => setType("EXPENSE")}
+            className={`py-3 rounded-2xl font-black text-[13px] transition-all ${
+              type === "EXPENSE"
+                ? "bg-slate-900 text-white shadow-lg"
+                : "bg-slate-100 text-slate-500"
+            }`}
+          >
+            💸 Expense
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setType("INCOME")}
+            className={`py-3 rounded-2xl font-black text-[13px] transition-all ${
+              type === "INCOME"
+                ? "bg-blue-600 text-white shadow-lg shadow-blue-200"
+                : "bg-slate-100 text-slate-500"
+            }`}
+          >
+            💰 Income
+          </button>
         </div>
 
+        {/* ERROR */}
+        {error && (
+          <div className="mb-4 px-4 py-3 rounded-2xl bg-red-50 border border-red-100 text-red-500 text-[12px] font-bold">
+            {error}
+          </div>
+        )}
+
+        {/* FORM */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1.5">
-            <label className="text-[12px] text-slate-600 font-bold ml-1">
-              Jumlah (Rp)
+          {/* AMOUNT */}
+          <div>
+            <label className="block text-[12px] font-bold text-slate-600 mb-2">
+              Jumlah
             </label>
-            {/* FIX: bg-white eksplisit */}
+
             <input
-              name="amount"
               type="number"
-              min="1"
-              required
+              min={1}
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
               placeholder="100000"
               className={inputCls}
             />
           </div>
-          <div className="space-y-1.5">
-            <label className="text-[12px] text-slate-600 font-bold ml-1">
-              Category
+
+          {/* CATEGORY */}
+          <div>
+            <label className="block text-[12px] font-bold text-slate-600 mb-2">
+              Kategori
             </label>
-            {/* FIX: bg-white eksplisit */}
-            <select name="category" required className={inputCls}>
-              <option value="">Choose Category...</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
+
+            <select
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              className={inputCls}
+            >
+              <option value="">
+                {loadingCategory
+                  ? "Loading..."
+                  : `Pilih kategori ${type.toLowerCase()}`}
+              </option>
+
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
                 </option>
               ))}
             </select>
           </div>
-          <div className="space-y-1.5">
-            <label className="text-[12px] text-slate-600 font-bold ml-1">
-              Description
+
+          {/* DESCRIPTION */}
+          <div>
+            <label className="block text-[12px] font-bold text-slate-600 mb-2">
+              Deskripsi
             </label>
-            {/* FIX: bg-white eksplisit */}
+
             <input
-              name="description"
               type="text"
-              placeholder="Optional..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Contoh: Gaji bulanan"
               className={inputCls}
             />
           </div>
+
+          {/* BUTTON */}
           <button
+            type="submit"
             disabled={isLoading}
-            className="w-full py-3.5 rounded-2xl font-black text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70 mt-2"
+            className={`w-full py-4 rounded-2xl font-black text-[14px] transition-all flex items-center justify-center gap-2 ${
+              type === "INCOME"
+                ? "bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-200"
+                : "bg-slate-900 hover:bg-black text-white shadow-lg"
+            }`}
           >
             {isLoading ? (
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
               <>
-                <FiPlus strokeWidth={3} size={14} />
-                Save Transaction
+                <FiPlus size={14} strokeWidth={3} />
+                Simpan Transaksi
               </>
             )}
           </button>
