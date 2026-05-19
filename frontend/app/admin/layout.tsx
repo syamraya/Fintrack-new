@@ -1,10 +1,4 @@
-// ─────────────────────────────────────────────────────────────────
-//  📁 FILE: app/admin/layout.tsx
-//  🖥️  TYPE: FRONTEND (Next.js Layout)
-//
-//  Layout admin — pakai Sidebar yang sama,
-//  proteksi role dilakukan di page.tsx masing-masing.
-// ─────────────────────────────────────────────────────────────────
+
 
 import Sidebar from "@/components/sidebarAdmin";
 

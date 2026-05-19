@@ -1,17 +1,6 @@
 "use client";
 
 // ─────────────────────────────────────────────────────────────────
-//  📁 FILE: app/news/page.tsx
-//
-//  Endpoint backend yang dipakai:
-//    GET /market/gold-price   → harga emas
-//    GET /market/crypto?coin= → harga crypto
-//    GET /market/analytics?symbol=&interval=&limit= → sinyal binance
-//
-//  News dari GNews API (free tier, 100 req/day):
-//    https://gnews.io/api/v4/search?q=gold+crypto&token=YOUR_TOKEN
-//    → Taruh token di .env: NEXT_PUBLIC_GNEWS_TOKEN=xxx
-//    → Atau pakai NewsData.io: NEXT_PUBLIC_NEWSDATA_TOKEN=xxx
 //
 //  Kalau tidak punya token, news section pakai mock data.
 // ─────────────────────────────────────────────────────────────────
