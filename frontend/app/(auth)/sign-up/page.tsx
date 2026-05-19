@@ -1,9 +1,20 @@
 "use client";
 
+// ─────────────────────────────────────────────────────────────────
+// FinTrack — Sign Up Page
+// Path: app/(auth)/sign-up/page.tsx
+// ─────────────────────────────────────────────────────────────────
+
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import {
+  FiArrowLeft,
+  FiMail,
+  FiLock,
+  FiUser,
+} from "react-icons/fi";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -101,166 +112,232 @@ export default function SignUpPage() {
     }
   };
 
+  const inputClass =
+    "w-full h-[54px] rounded-2xl border border-slate-200 bg-white pl-12 pr-4 text-[14px] font-semibold text-slate-800 placeholder:text-slate-300 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10";
+
   return (
-    <main className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-white overflow-hidden">
+    <main className="min-h-screen bg-[#F8FAFC] grid grid-cols-1 lg:grid-cols-2 overflow-hidden">
       {/* LEFT */}
-      <div className="relative hidden lg:flex flex-col items-start justify-between bg-[#0F172A] p-12 overflow-hidden">
-        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-indigo-600/20 blur-[120px] rounded-full animate-pulse" />
+      <div className="hidden lg:flex relative bg-blue-600 overflow-hidden p-12 flex-col justify-between">
+        <div className="absolute inset-0 opacity-[0.08]"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle, white 1px, transparent 1px)",
+            backgroundSize: "30px 30px",
+          }}
+        />
 
-        <div className="absolute bottom-[-10%] right-[-10%] w-[400px] h-[400px] bg-violet-600/20 blur-[100px] rounded-full animate-bounce" />
+        <div className="absolute -top-32 -right-32 w-[420px] h-[420px] rounded-full bg-white/10 blur-3xl" />
+        <div className="absolute -bottom-32 -left-32 w-[380px] h-[380px] rounded-full bg-cyan-300/10 blur-3xl" />
 
+        {/* LOGO */}
         <div className="relative z-10 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-            <span className="text-white font-black text-xl">FT</span>
+          <div className="w-10 h-10 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center">
+            <span className="text-white font-black text-sm">FT</span>
           </div>
 
-          <span className="text-white font-bold text-2xl tracking-tight">
-            FinTrack
+          <span className="text-white text-[22px] font-black tracking-tight">
+            Fin<span className="text-blue-200">Track</span>
           </span>
         </div>
 
-        <div className="relative z-10 max-w-lg">
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-5xl font-black text-white leading-[1.1] tracking-tight"
-          >
-            Secure your <br />
-            <span className="text-indigo-400">financial future.</span>
-          </motion.h1>
-
-          <p className="mt-6 text-slate-400 text-lg leading-relaxed font-medium">
-            Real-time portfolio tracking, institutional-grade analytics,
-            and AI-powered financial insights.
-          </p>
-
-          <div className="mt-12 space-y-6">
-            {[
-              "Real-time market analytics",
-              "AI financial assistant",
-              "Bank-level security",
-            ].map((text, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-3 text-slate-300 font-medium"
-              >
-                <div className="w-5 h-5 rounded-full bg-indigo-500/20 flex items-center justify-center">
-                  <div className="w-2 h-2 rounded-full bg-indigo-400" />
-                </div>
-
-                {text}
-              </div>
-            ))}
+        {/* CONTENT */}
+        <div className="relative z-10 max-w-[500px]">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 mb-7">
+            <div className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
+            <span className="text-[11px] tracking-widest uppercase font-bold text-white/90">
+              AI-Powered Finance Platform
+            </span>
           </div>
+
+          <h1 className="text-white text-[52px] font-black leading-[1.02] tracking-tight">
+            Start building
+            <br />
+            your financial
+            <br />
+            <span className="text-blue-200">future today.</span>
+          </h1>
+
+          <p className="mt-6 text-blue-100 text-[16px] leading-relaxed max-w-[390px] font-medium">
+            Modern portfolio management with real-time analytics and
+            institutional-level experience.
+          </p>
         </div>
 
-        <div className="relative z-10 text-slate-500 text-sm font-medium">
-          © 2026 FinTrack Inc.
+        {/* STATS */}
+        <div className="relative z-10 grid grid-cols-3 gap-4">
+          {[
+            { value: "150+", label: "Markets" },
+            { value: "24/7", label: "Tracking" },
+            { value: "Secure", label: "Protected" },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm"
+            >
+              <p className="text-white text-[20px] font-black">
+                {item.value}
+              </p>
+
+              <p className="mt-1 text-[11px] uppercase tracking-wider font-bold text-blue-100">
+                {item.label}
+              </p>
+            </div>
+          ))}
         </div>
       </div>
 
       {/* RIGHT */}
-      <div className="flex items-center justify-center p-8 lg:p-24 relative">
+      <div className="relative flex items-center justify-center px-6 py-12 lg:px-16">
+        <div
+          className="absolute inset-0 opacity-60 pointer-events-none"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle, #cbd5e1 1px, transparent 1px)",
+            backgroundSize: "28px 28px",
+          }}
+        />
+
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md"
+          className="relative w-full max-w-[430px]"
         >
+          <a
+            href="/"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-slate-400 hover:text-blue-600 transition-colors mb-10"
+          >
+            <FiArrowLeft size={16} />
+            Kembali ke Beranda
+          </a>
+
+          <div className="flex lg:hidden items-center gap-3 mb-10">
+            <div className="w-9 h-9 rounded-2xl bg-blue-600 flex items-center justify-center">
+              <span className="text-white font-black text-sm">FT</span>
+            </div>
+
+            <span className="text-slate-900 font-black text-xl tracking-tight">
+              Fin<span className="text-blue-600">Track</span>
+            </span>
+          </div>
+
           <AnimatePresence mode="wait">
             {step === "register" ? (
               <motion.div
                 key="register"
-                initial={{ opacity: 0, x: 20 }}
+                initial={{ opacity: 0, x: 14 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.25 }}
+                exit={{ opacity: 0, x: -14 }}
               >
-                <div className="mb-10">
-                  <h2 className="text-4xl font-black text-slate-900 tracking-tight">
-                    Create account
-                  </h2>
+                <div className="mb-8">
+                  <h1 className="text-[34px] leading-[1.1] tracking-tight font-black text-slate-900">
+                    Create your
+                    <br />
+                    <span className="text-blue-600">FinTrack</span> account
+                  </h1>
 
-                  <p className="text-slate-500 mt-3 font-medium">
-                    Already have an account?{" "}
+                  <p className="mt-3 text-[14px] font-medium text-slate-400">
+                    Sudah punya akun?{" "}
                     <Link
                       href="/sign-in"
-                      className="text-indigo-600 hover:text-indigo-700 font-bold underline underline-offset-4"
+                      className="text-blue-600 font-bold hover:underline"
                     >
-                      Sign in
+                      Masuk sekarang
                     </Link>
                   </p>
                 </div>
 
                 <form
                   onSubmit={handleRegister}
-                  className="space-y-6"
+                  className="space-y-5"
                 >
                   <div className="space-y-2">
-                    <label className="text-sm text-slate-700 font-bold ml-1">
+                    <label className="text-[11px] uppercase tracking-widest font-black text-slate-400">
                       Full Name
                     </label>
 
-                    <input
-                      type="text"
-                      required
-                      placeholder="John Doe"
-                      value={formData.name}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          name: e.target.value,
-                        })
-                      }
-                      className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-semibold shadow-sm"
-                    />
+                    <div className="relative">
+                      <FiUser
+                        size={17}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"
+                      />
+
+                      <input
+                        type="text"
+                        required
+                        placeholder="John Doe"
+                        value={formData.name}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            name: e.target.value,
+                          })
+                        }
+                        className={inputClass}
+                      />
+                    </div>
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm text-slate-700 font-bold ml-1">
-                      Email Address
+                    <label className="text-[11px] uppercase tracking-widest font-black text-slate-400">
+                      Email
                     </label>
 
-                    <input
-                      type="email"
-                      required
-                      placeholder="name@company.com"
-                      value={formData.email}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          email: e.target.value,
-                        })
-                      }
-                      className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-semibold shadow-sm"
-                    />
+                    <div className="relative">
+                      <FiMail
+                        size={17}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"
+                      />
+
+                      <input
+                        type="email"
+                        required
+                        placeholder="name@email.com"
+                        value={formData.email}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            email: e.target.value,
+                          })
+                        }
+                        className={inputClass}
+                      />
+                    </div>
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm text-slate-700 font-bold ml-1">
+                    <label className="text-[11px] uppercase tracking-widest font-black text-slate-400">
                       Password
                     </label>
 
-                    <input
-                      type="password"
-                      required
-                      placeholder="••••••••"
-                      value={formData.password}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          password: e.target.value,
-                        })
-                      }
-                      className="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all font-semibold shadow-sm"
-                    />
+                    <div className="relative">
+                      <FiLock
+                        size={17}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"
+                      />
+
+                      <input
+                        type="password"
+                        required
+                        placeholder="••••••••"
+                        value={formData.password}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            password: e.target.value,
+                          })
+                        }
+                        className={inputClass}
+                      />
+                    </div>
                   </div>
 
                   <button
                     disabled={isLoading}
-                    className="w-full py-4 rounded-2xl font-bold text-white bg-slate-900 hover:bg-slate-800 shadow-xl shadow-slate-200 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+                    className="w-full h-[56px] rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-[14px] shadow-lg shadow-blue-200 transition-all active:scale-[0.98] flex items-center justify-center disabled:opacity-70"
                   >
                     {isLoading ? (
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                     ) : (
                       "Continue"
                     )}
@@ -270,31 +347,33 @@ export default function SignUpPage() {
             ) : (
               <motion.div
                 key="verify"
-                initial={{ opacity: 0, x: 20 }}
+                initial={{ opacity: 0, x: 14 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.25 }}
+                exit={{ opacity: 0, x: -14 }}
               >
-                <div className="mb-10">
-                  <div className="w-16 h-16 rounded-3xl bg-indigo-100 flex items-center justify-center mb-6">
+                <div className="mb-8">
+                  <div className="w-16 h-16 rounded-3xl bg-blue-100 flex items-center justify-center mb-6">
                     <span className="text-2xl">✉️</span>
                   </div>
 
-                  <h2 className="text-4xl font-black text-slate-900 tracking-tight leading-tight">
-                    Verify your email
-                  </h2>
+                  <h1 className="text-[34px] leading-[1.1] tracking-tight font-black text-slate-900">
+                    Verify your
+                    <br />
+                    email address
+                  </h1>
 
-                  <p className="text-slate-500 mt-4 font-medium leading-relaxed">
-                    We sent a 6-digit verification code to
+                  <p className="mt-4 text-[14px] leading-relaxed font-medium text-slate-400">
+                    Kode verifikasi telah dikirim ke
                     <span className="font-bold text-slate-900">
-                      {" "}{formData.email}
+                      {" "}
+                      {formData.email}
                     </span>
                   </p>
                 </div>
 
-                <div className="space-y-6">
+                <div className="space-y-5">
                   <div className="space-y-2">
-                    <label className="text-sm text-slate-700 font-bold ml-1">
+                    <label className="text-[11px] uppercase tracking-widest font-black text-slate-400">
                       Verification Code
                     </label>
 
@@ -304,17 +383,17 @@ export default function SignUpPage() {
                       placeholder="123456"
                       value={otp}
                       onChange={(e) => setOtp(e.target.value)}
-                      className="w-full px-5 py-5 rounded-2xl border border-slate-200 bg-white text-center tracking-[10px] text-2xl font-black text-slate-900 placeholder:text-slate-300 outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all shadow-sm"
+                      className="w-full h-[60px] rounded-2xl border border-slate-200 bg-white text-center text-[28px] tracking-[12px] font-black text-slate-900 placeholder:text-slate-300 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
                     />
                   </div>
 
                   <button
                     onClick={handleVerify}
                     disabled={otpLoading}
-                    className="w-full py-4 rounded-2xl font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-xl shadow-indigo-200 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+                    className="w-full h-[56px] rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-[14px] shadow-lg shadow-blue-200 transition-all active:scale-[0.98] flex items-center justify-center disabled:opacity-70"
                   >
                     {otpLoading ? (
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                     ) : (
                       "Verify Account"
                     )}
@@ -322,7 +401,7 @@ export default function SignUpPage() {
 
                   <button
                     onClick={() => setStep("register")}
-                    className="w-full text-sm font-bold text-slate-500 hover:text-slate-800 transition-colors"
+                    className="w-full text-sm font-bold text-slate-400 hover:text-slate-700 transition-colors"
                   >
                     Back
                   </button>

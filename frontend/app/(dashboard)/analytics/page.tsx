@@ -1,11 +1,5 @@
 "use client";
 
-// ─────────────────────────────────────────────────────────────────
-//  📁 FILE: app/analytics/page.tsx
-//  Analytics — breakdown pengeluaran per kategori & waktu
-//
-//  Install: npm install recharts
-// ─────────────────────────────────────────────────────────────────
 
 import { useEffect, useState, useMemo } from "react";
 import { useSession } from "next-auth/react";

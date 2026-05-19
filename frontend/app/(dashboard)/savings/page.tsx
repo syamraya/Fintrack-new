@@ -1,9 +1,7 @@
 "use client";
 
-// ─────────────────────────────────────────────────────────────────
 //  FinTrack — Saving Goals Page
 //  Path: app/customer/savings/page.tsx
-// ─────────────────────────────────────────────────────────────────
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";

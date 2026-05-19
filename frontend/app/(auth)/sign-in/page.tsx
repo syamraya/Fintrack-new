@@ -1,28 +1,34 @@
 "use client";
 
 // ─────────────────────────────────────────────────────────────────
-//  FinTrack — Sign In Page (NextAuth CredentialsProvider)
-//  Path: app/(auth)/sign-in/page.tsx
+// FinTrack — Sign In Page
+// Path: app/(auth)/sign-in/page.tsx
 // ─────────────────────────────────────────────────────────────────
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { FiUser, FiLock, FiArrowLeft, FiTrendingUp } from "react-icons/fi";
+import {
+  FiUser,
+  FiLock,
+  FiArrowLeft,
+  FiTrendingUp,
+} from "react-icons/fi";
 
 export default function SignInPage() {
-  const router       = useRouter();
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl  = searchParams.get("callbackUrl") ?? "/dashboard";
+  const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
 
-  const [email,     setEmail]     = useState("");
-  const [password,  setPassword]  = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error,     setError]     = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
     setIsLoading(true);
     setError(null);
 
@@ -39,13 +45,11 @@ export default function SignInPage() {
       }
 
       if (result?.ok) {
-        // Fetch session untuk cek role
         const sessionRes = await fetch("/api/auth/session");
-        const session    = await sessionRes.json();
-        const role       = session?.user?.role;
+        const session = await sessionRes.json();
 
-        // ✅ FIX: Hapus router.refresh() — menyebabkan race condition
-        // Redirect langsung sesuai role
+        const role = session?.user?.role;
+
         if (role === "ADMIN") {
           router.push("/admin");
         } else {
@@ -59,203 +63,267 @@ export default function SignInPage() {
     }
   }
 
-  const inputCls =
-    "w-full pl-11 pr-4 py-3.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/15 focus:border-blue-400 transition-all text-slate-800 placeholder:text-slate-300 font-medium text-[14px]";
+  const inputClass =
+    "w-full h-[54px] rounded-2xl border border-slate-200 bg-white pl-12 pr-4 text-[14px] font-semibold text-slate-800 placeholder:text-slate-300 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10";
 
   return (
-    <div
-      className="min-h-screen bg-slate-50 flex overflow-hidden"
-      style={{ fontFamily: "var(--font-sans, 'Plus Jakarta Sans', sans-serif)" }}
-    >
-      {/* ── Left panel — branding ─────────────────────────────── */}
-      <div className="hidden lg:flex lg:w-1/2 bg-blue-600 flex-col justify-between p-12 relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none opacity-10"
-          style={{ backgroundImage: "radial-gradient(circle, rgba(255,255,255,.6) 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
-        <div className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full pointer-events-none"
-          style={{ background: "radial-gradient(ellipse, rgba(255,255,255,0.12) 0%, transparent 70%)" }} />
-        <div className="absolute -bottom-32 -left-32 w-[400px] h-[400px] rounded-full pointer-events-none"
-          style={{ background: "radial-gradient(ellipse, rgba(255,255,255,0.08) 0%, transparent 70%)" }} />
+    <main className="min-h-screen bg-[#F8FAFC] grid grid-cols-1 lg:grid-cols-2 overflow-hidden">
+      {/* LEFT */}
+      <div className="hidden lg:flex relative bg-blue-600 overflow-hidden p-12 flex-col justify-between">
+        <div className="absolute inset-0 opacity-[0.08]"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle, white 1px, transparent 1px)",
+            backgroundSize: "30px 30px",
+          }}
+        />
 
-        {/* Logo */}
-        <div className="relative flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-white/20 border border-white/30 flex items-center justify-center">
-            <span className="text-white font-black text-[13px]">FT</span>
+        <div className="absolute -top-32 -right-32 w-[420px] h-[420px] rounded-full bg-white/10 blur-3xl" />
+        <div className="absolute -bottom-32 -left-32 w-[380px] h-[380px] rounded-full bg-cyan-300/10 blur-3xl" />
+
+        {/* LOGO */}
+        <div className="relative z-10 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center">
+            <span className="text-white font-black text-sm">FT</span>
           </div>
-          <span className="text-white font-black text-[20px] tracking-tight">
+
+          <span className="text-white text-[22px] font-black tracking-tight">
             Fin<span className="text-blue-200">Track</span>
           </span>
         </div>
 
-        {/* Center copy */}
-        <div className="relative">
-          <div className="inline-flex items-center gap-2 bg-white/15 border border-white/20 rounded-full px-3 py-1.5 mb-6">
-            <span className="w-1.5 h-1.5 bg-emerald-300 rounded-full animate-pulse" />
-            <span className="text-white/90 text-[11px] font-bold uppercase tracking-widest">Live Market · 150+ Aset</span>
+        {/* CONTENT */}
+        <div className="relative z-10 max-w-[480px]">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 mb-7">
+            <div className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
+            <span className="text-[11px] tracking-widest uppercase font-bold text-white/90">
+              Real-Time Finance Platform
+            </span>
           </div>
-          <h2 className="text-white text-[40px] font-black leading-[1.08] tracking-tight mb-5">
-            Pantau semua<br />asetmu dari<br />
-            <span className="text-blue-200">satu tempat.</span>
-          </h2>
-          <p className="text-blue-200 text-[15px] leading-relaxed max-w-[340px] font-medium">
-            Harga crypto & emas real-time, berita keuangan terkini, dan wallet — semua terintegrasi di FinTrack.
+
+          <h1 className="text-white text-[52px] font-black leading-[1.02] tracking-tight">
+            Monitor your
+            <br />
+            financial world
+            <br />
+            <span className="text-blue-200">in one place.</span>
+          </h1>
+
+          <p className="mt-6 text-blue-100 text-[16px] leading-relaxed max-w-[380px] font-medium">
+            Track crypto, stocks, gold, and your spending with a modern
+            institutional-grade dashboard.
           </p>
         </div>
 
-        {/* Mini stats */}
-        <div className="relative grid grid-cols-3 gap-3">
+        {/* STATS */}
+        <div className="relative z-10 grid grid-cols-3 gap-4">
           {[
-            { label: "Pengguna Aktif",   value: "2.4M+"   },
-            { label: "Volume Transaksi", value: "Rp 18T+" },
-            { label: "Uptime",           value: "99.9%"   },
-          ].map((s) => (
-            <div key={s.label} className="bg-white/10 border border-white/15 rounded-xl p-3">
-              <p className="text-white font-black text-[18px] tracking-tight leading-none">{s.value}</p>
-              <p className="text-blue-200 text-[10px] font-bold uppercase tracking-wider mt-1">{s.label}</p>
+            { value: "2.4M+", label: "Users" },
+            { value: "150+", label: "Assets" },
+            { value: "99.9%", label: "Uptime" },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-sm"
+            >
+              <p className="text-white text-[20px] font-black">
+                {item.value}
+              </p>
+
+              <p className="mt-1 text-[11px] uppercase tracking-wider font-bold text-blue-100">
+                {item.label}
+              </p>
             </div>
           ))}
         </div>
       </div>
 
-      {/* ── Right panel — form ────────────────────────────────── */}
-      <div className="w-full lg:w-1/2 flex flex-col justify-center px-6 py-12 lg:px-16 relative">
-        <div className="absolute inset-0 pointer-events-none"
-          style={{ backgroundImage: "radial-gradient(circle, #e2e8f0 1px, transparent 1px)", backgroundSize: "28px 28px", opacity: 0.5 }} />
+      {/* RIGHT */}
+      <div className="relative flex items-center justify-center px-6 py-12 lg:px-16">
+        <div
+          className="absolute inset-0 opacity-60 pointer-events-none"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle, #cbd5e1 1px, transparent 1px)",
+            backgroundSize: "28px 28px",
+          }}
+        />
 
-        <div className="relative w-full max-w-[420px] mx-auto">
-
-          {/* Back */}
-          <a href="/" className="inline-flex items-center gap-2 text-slate-400 hover:text-blue-600 transition-colors mb-10 font-semibold text-sm group">
-            <FiArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative w-full max-w-[430px]"
+        >
+          {/* BACK */}
+          <a
+            href="/"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-slate-400 hover:text-blue-600 transition-colors mb-10"
+          >
+            <FiArrowLeft size={16} />
             Kembali ke Beranda
           </a>
 
-          {/* Mobile logo */}
-          <div className="flex lg:hidden items-center gap-2.5 mb-8">
-            <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center">
-              <span className="text-white font-black text-[12px]">FT</span>
+          {/* MOBILE LOGO */}
+          <div className="flex lg:hidden items-center gap-3 mb-10">
+            <div className="w-9 h-9 rounded-2xl bg-blue-600 flex items-center justify-center">
+              <span className="text-white font-black text-sm">FT</span>
             </div>
-            <span className="text-slate-900 font-black text-[17px] tracking-tight">
+
+            <span className="text-slate-900 font-black text-xl tracking-tight">
               Fin<span className="text-blue-600">Track</span>
             </span>
           </div>
 
-          {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            className="mb-8"
-          >
-            <h1 className="text-slate-900 text-[30px] font-black tracking-tight leading-tight">
-              Masuk ke akun<br />
-              <span className="text-blue-600">FinTrack</span> kamu
-            </h1>
-            <p className="text-slate-400 text-[14px] font-medium mt-2">
-              Belum punya akun?{" "}
-              <a href="/sign-up" className="text-blue-600 font-bold hover:underline">Daftar gratis</a>
-            </p>
-          </motion.div>
+          {/* HEADER */}
+          <div className="mb-8">
+            <h2 className="text-[34px] leading-[1.1] tracking-tight font-black text-slate-900">
+              Welcome back to
+              <br />
+              <span className="text-blue-600">FinTrack</span>
+            </h2>
 
-          {/* Error alert */}
+            <p className="mt-3 text-[14px] font-medium text-slate-400">
+              Belum punya akun?{" "}
+              <a
+                href="/sign-up"
+                className="text-blue-600 font-bold hover:underline"
+              >
+                Daftar sekarang
+              </a>
+            </p>
+          </div>
+
+          {/* ERROR */}
           {error && (
             <motion.div
-              initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-              className="mb-5 px-4 py-3 rounded-xl bg-red-50 border border-red-100 text-red-600 text-[13px] font-semibold flex items-center gap-2"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-5 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-[13px] font-semibold text-red-600"
             >
-              <span>⚠</span> {error}
+              {error}
             </motion.div>
           )}
 
-          {/* Form */}
+          {/* FORM */}
           <motion.form
             onSubmit={handleSubmit}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ delay: 0.08 }}
             className="space-y-5"
           >
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-black uppercase tracking-widest text-slate-400">Email</label>
-              <div className="relative group">
-                <FiUser className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={16} />
+            <div className="space-y-2">
+              <label className="text-[11px] uppercase tracking-widest font-black text-slate-400">
+                Email
+              </label>
+
+              <div className="relative">
+                <FiUser
+                  size={17}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"
+                />
+
                 <input
                   type="email"
-                  value={email}
-                  onChange={(e) => { setEmail(e.target.value); setError(null); }}
-                  placeholder="nama@email.com"
-                  className={inputCls}
                   required
                   autoComplete="email"
+                  placeholder="nama@email.com"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setError(null);
+                  }}
+                  className={inputClass}
                 />
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-black uppercase tracking-widest text-slate-400">Password</label>
-              <div className="relative group">
-                <FiLock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={16} />
+            <div className="space-y-2">
+              <label className="text-[11px] uppercase tracking-widest font-black text-slate-400">
+                Password
+              </label>
+
+              <div className="relative">
+                <FiLock
+                  size={17}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300"
+                />
+
                 <input
                   type="password"
-                  value={password}
-                  onChange={(e) => { setPassword(e.target.value); setError(null); }}
-                  placeholder="••••••••"
-                  className={inputCls}
                   required
                   autoComplete="current-password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setError(null);
+                  }}
+                  className={inputClass}
                 />
               </div>
             </div>
 
-            <div className="flex justify-end -mt-2">
-              <a href="#" className="text-[12px] text-slate-400 hover:text-blue-600 font-semibold transition-colors">Lupa password?</a>
+            <div className="flex justify-end">
+              <a
+                href="#"
+                className="text-[12px] font-semibold text-slate-400 hover:text-blue-600"
+              >
+                Lupa password?
+              </a>
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-xl font-bold text-[14px] shadow-md shadow-blue-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full h-[56px] rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-[14px] shadow-lg shadow-blue-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70"
             >
-              {isLoading
-                ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                : <>Masuk Sekarang <FiTrendingUp size={15} /></>}
+              {isLoading ? (
+                <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+              ) : (
+                <>
+                  Masuk Sekarang
+                  <FiTrendingUp size={15} />
+                </>
+              )}
             </button>
           </motion.form>
 
-          {/* Divider */}
-          <div className="flex items-center gap-3 my-7">
-            <div className="flex-1 h-px bg-slate-100" />
-            <span className="text-slate-300 text-[12px] font-semibold">live data</span>
-            <div className="flex-1 h-px bg-slate-100" />
+          {/* FOOTER */}
+          <div className="mt-8 rounded-2xl border border-slate-100 bg-white px-5 py-4 shadow-sm">
+            <div className="flex items-center justify-between">
+              {[
+                { sym: "BTC", val: "$67.4K", up: true },
+                { sym: "ETH", val: "$3.5K", up: true },
+                { sym: "XAU", val: "$2318", up: true },
+                { sym: "IHSG", val: "7284", up: false },
+              ].map((item) => (
+                <div key={item.sym} className="text-center">
+                  <p className="text-[10px] uppercase tracking-wider font-black text-slate-400">
+                    {item.sym}
+                  </p>
+
+                  <p className="text-[12px] font-black text-slate-800 mt-1">
+                    {item.val}
+                  </p>
+
+                  <p
+                    className={`text-[10px] font-black mt-1 ${
+                      item.up ? "text-emerald-500" : "text-red-500"
+                    }`}
+                  >
+                    {item.up ? "▲" : "▼"}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Mini ticker */}
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
-            className="bg-white border border-slate-100 rounded-xl px-4 py-3 flex items-center justify-between gap-2 shadow-sm"
-          >
-            {[
-              { sym: "BTC",  val: "$67,420", up: true  },
-              { sym: "ETH",  val: "$3,512",  up: true  },
-              { sym: "GOLD", val: "$2,318",  up: true  },
-              { sym: "IHSG", val: "7,284",   up: false },
-            ].map((t) => (
-              <div key={t.sym} className="text-center flex-1 min-w-0">
-                <p className="text-slate-400 text-[9px] font-bold uppercase tracking-wider">{t.sym}</p>
-                <p className="text-slate-800 text-[11px] font-black">{t.val}</p>
-                <p className={`text-[9px] font-bold ${t.up ? "text-emerald-500" : "text-red-400"}`}>{t.up ? "▲" : "▼"}</p>
-              </div>
-            ))}
-            <div className="text-slate-300 text-[10px] font-mono border-l border-slate-100 pl-3 shrink-0 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse inline-block" />
-              Live
-            </div>
-          </motion.div>
-
-          <p className="text-center text-slate-300 text-[11px] font-medium mt-8">
+          <p className="text-center text-[11px] font-medium text-slate-300 mt-8">
             © 2026 FinTrack. All rights reserved.
           </p>
-        </div>
+        </motion.div>
       </div>
-    </div>
+    </main>
   );
 }
