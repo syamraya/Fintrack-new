@@ -602,7 +602,7 @@ export default function LandingPage() {
                 </a>
 
                 <a
-                  href="#"
+                  href=""
                   className="block hover:text-slate-900 transition-colors"
                 >
                   Markets

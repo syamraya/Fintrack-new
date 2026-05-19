@@ -25,10 +25,12 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
+import { signOut } from "next-auth/react";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import {
   FiGrid,
   FiList,
+  FiTarget,
   FiPieChart,
   FiDollarSign,
   FiGlobe,
@@ -41,25 +43,29 @@ import { SiBitcoin } from "react-icons/si";
 
 // ── Nav items — edit sesuai kebutuhan ─────────────────────────────
 const NAV_ITEMS = [
-  { icon: FiGrid,       label: "Dashboard",    href: "/dashboard"    },
-  { icon: FiList,       label: "Transaksi",    href: "/transactions" },
-  { icon: FiPieChart,   label: "Analitik",     href: "/analytics"    },
-  { icon: SiBitcoin,    label: "Crypto",       href: "/crypto"       },
-  { icon: FiDollarSign, label: "Emas & Forex", href: "/market"       },
-  { icon: FiGlobe,      label: "Berita",       href: "/news"         },
-  { icon: FiCreditCard, label: "Wallet",       href: "/wallet"       },
+  { icon: FiGrid, label: "Dashboard", href: "/dashboard" },
+  { icon: FiTarget, label: "Savings Goal", href: "/savings" },
+  { icon: FiList, label: "Transaction", href: "/transaction" },
+  { icon: FiPieChart, label: "Analytics", href: "/analytics" },
+  { icon: SiBitcoin, label: "Crypto", href: "/market" },
+  { icon: FiGlobe, label: "News", href: "/news" },
+  { icon: FiCreditCard, label: "Wallet", href: "/wallet" },
 ];
 
 const BOTTOM_ITEMS = [
-  { icon: FiBell,     label: "Notifikasi", href: "/notifications" },
-  { icon: FiSettings, label: "Pengaturan", href: "/settings"      },
+  { icon: FiBell, label: "Notifikasi", href: "/notifications" },
+  { icon: FiSettings, label: "Pengaturan", href: "/settings" },
 ];
 
 // ── Tooltip ───────────────────────────────────────────────────────
 function Tooltip({
-  label, children, visible,
+  label,
+  children,
+  visible,
 }: {
-  label: string; children: React.ReactNode; visible: boolean;
+  label: string;
+  children: React.ReactNode;
+  visible: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
   return (
@@ -91,9 +97,17 @@ function Tooltip({
 
 // ── Single nav item ───────────────────────────────────────────────
 function NavItem({
-  icon: Icon, label, href, isActive, expanded,
+  icon: Icon,
+  label,
+  href,
+  isActive,
+  expanded,
 }: {
-  icon: any; label: string; href: string; isActive: boolean; expanded: boolean;
+  icon: any;
+  label: string;
+  href: string;
+  isActive: boolean;
+  expanded: boolean;
 }) {
   return (
     <Tooltip label={label} visible={!expanded}>
@@ -102,9 +116,10 @@ function NavItem({
         className={`
           relative flex items-center gap-3 w-full
           px-2.5 py-2.5 rounded-xl transition-all duration-150
-          ${isActive
-            ? "bg-white/[0.10] text-white"
-            : "text-white/30 hover:text-white/70 hover:bg-white/[0.05]"
+          ${
+            isActive
+              ? "bg-white/[0.10] text-white"
+              : "text-white/30 hover:text-white/70 hover:bg-white/[0.05]"
           }
         `}
       >
@@ -140,8 +155,7 @@ function NavItem({
 export default function Sidebar() {
   const [expanded, setExpanded] = useState(false);
   const pathname = usePathname();
-  const { data: session } = useSession();
-  const user = session?.user;
+  const { profile } = useUserProfile();
 
   return (
     <motion.aside
@@ -158,7 +172,9 @@ export default function Sidebar() {
       {/* ── Logo ── */}
       <div className="flex items-center gap-2.5 h-14 px-3 shrink-0 border-b border-white/[0.05]">
         <div className="w-7 h-7 rounded-lg bg-blue-500 flex items-center justify-center shrink-0 shadow-md shadow-blue-500/40">
-          <span className="text-white font-black text-[11px] tracking-tight">FT</span>
+          <span className="text-white font-black text-[11px] tracking-tight">
+            FT
+          </span>
         </div>
         <AnimatePresence>
           {expanded && (
@@ -183,7 +199,8 @@ export default function Sidebar() {
             {...item}
             isActive={
               pathname === item.href ||
-              (item.href !== "/dashboard" && (pathname?.startsWith(item.href + "/") ?? false))
+              (item.href !== "/dashboard" &&
+                (pathname?.startsWith(item.href + "/") ?? false))
             }
             expanded={expanded}
           />
@@ -203,13 +220,24 @@ export default function Sidebar() {
 
         {/* User row */}
         <div className="mt-1 pt-2 border-t border-white/[0.05]">
-          <Tooltip label={`Keluar (${user?.name ?? "User"})`} visible={!expanded}>
+          <Tooltip
+            label={`Keluar (${profile?.name ?? "User"})`}
+            visible={!expanded}
+          >
             <div className="flex items-center gap-3 w-full px-2.5 py-2 rounded-xl hover:bg-white/[0.05] transition-colors group">
               {/* avatar */}
-              <div className="w-7 h-7 rounded-lg bg-blue-500/15 border border-blue-500/25 flex items-center justify-center shrink-0">
-                <span className="text-blue-400 font-black text-[10px]">
-                  {user?.name?.[0]?.toUpperCase() ?? "U"}
-                </span>
+              <div className="w-7 h-7 rounded-lg bg-blue-500/15 border border-blue-500/25 flex items-center justify-center shrink-0 overflow-hidden">
+                {profile?.avatarUrl ? (
+                  <img
+                    src={profile.avatarUrl}
+                    alt="avatar"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-blue-400 font-black text-[10px]">
+                    {profile?.name?.[0]?.toUpperCase() ?? "U"}
+                  </span>
+                )}
               </div>
 
               <AnimatePresence>
@@ -222,10 +250,10 @@ export default function Sidebar() {
                     className="flex-1 min-w-0"
                   >
                     <p className="text-white/70 text-[12px] font-bold truncate leading-tight">
-                      {user?.name ?? "User"}
+                      {profile?.name ?? "User"}
                     </p>
                     <p className="text-white/25 text-[10px] font-mono truncate">
-                      {user?.email ?? ""}
+                      {profile?.email ?? ""}
                     </p>
                   </motion.div>
                 )}
@@ -237,7 +265,9 @@ export default function Sidebar() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    onClick={() => signOut({ callbackUrl: "/login" })}
+                    onClick={async () => {
+                      await signOut({ redirect: true, callbackUrl: "/"   });
+                    }}
                     className="text-white/20 hover:text-red-400 transition-colors shrink-0 p-1 rounded-lg hover:bg-red-500/10"
                   >
                     <FiLogOut size={13} />

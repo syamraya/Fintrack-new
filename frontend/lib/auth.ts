@@ -1,35 +1,50 @@
-import API from "./api";
+import NextAuth from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
 
-export async function login(email: string, password: string) {
-  const res = await fetch(`${API}/auth/login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
+const handler = NextAuth({
+  providers: [
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_API_URL}/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: credentials?.email,
+            password: credentials?.password,
+          }),
+        });
+
+        const data = await res.json();
+        console.log("AUTH DATA:", data); // cek di terminal
+
+        if (res.ok && data) return data;
+        return null;
+      },
+    }),
+  ],
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.role = user.role;
+        token.accessToken = user.accessToken;
+      }
+      return token;
     },
-    body: JSON.stringify({ email, password }),
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || "Login failed");
-  }
-
-  return res.json();
-}
-
-export async function register(name: string, email: string, password: string) {
-  const res = await fetch(`${API}/auth/register`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
+    async session({ session, token }) {
+      session.user.id = token.id;
+      session.user.role = token.role;
+      session.user.accessToken = token.accessToken;
+      return session;
     },
-    body: JSON.stringify({ name, email, password }),
-  });
+  },
+  pages: { signIn: "/sign-in" },
+  secret: process.env.NEXTAUTH_SECRET,
+});
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || "Register failed");
-  }
-
-  return res.json();
-}
+export { handler as GET, handler as POST };
