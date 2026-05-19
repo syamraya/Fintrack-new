@@ -239,7 +239,10 @@ function PasswordForm({ token }: { token: string }) {
       const res = await fetch(`${API}/users/update-profile`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ password: next }),
+        body: JSON.stringify({
+              oldPassword: current,
+              password: next,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Gagal ganti password");

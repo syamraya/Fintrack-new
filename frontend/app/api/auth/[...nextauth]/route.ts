@@ -23,18 +23,18 @@ const handler = NextAuth({
         );
 
         const data = await res.json();
-        console.log("AUTH DATA:", data); // cek di terminal Next.js
+        console.log("AUTH DATA:", data);
 
-        if (!res.ok || !data) return null;
+        if (!res.ok || !data?.user) return null;
 
-        
+        // Mapping eksplisit — pastikan role selalu terbaca
         return {
           id:          data.user.id,
           name:        data.user.name,
           email:       data.user.email,
           role:        data.user.role,
           balance:     data.user.balance,
-          accessToken: data.access_token, // ← rename access_token → accessToken
+          accessToken: data.access_token,
         };
       },
     }),
@@ -42,12 +42,12 @@ const handler = NextAuth({
 
   callbacks: {
     async jwt({ token, user }) {
-      // `user` hanya ada saat pertama login
+      // `user` hanya ada saat pertama kali login
       if (user) {
         token.id          = user.id;
         token.role        = (user as any).role;
         token.balance     = (user as any).balance;
-        token.accessToken = (user as any).accessToken; // ← sudah benar namanya
+        token.accessToken = (user as any).accessToken;
       }
       return token;
     },
