@@ -1,8 +1,8 @@
 "use client";
 
 // ─────────────────────────────────────────────────────────────────
-//
-//  Kalau tidak punya token, news section pakai mock data.
+//  News & Market page — fetches news dari backend (/market/news)
+//  bukan langsung ke GNews dari browser.
 // ─────────────────────────────────────────────────────────────────
 
 import { useEffect, useState, useCallback } from "react";
@@ -20,9 +20,6 @@ import {
 } from "react-icons/fi";
 
 const API = process.env.NEXT_PUBLIC_BASE_API_URL ?? "http://localhost:3001";
-const GNEWS = process.env.NEXT_PUBLIC_GNEWS_TOKEN ?? "";
-
-// use NextAuth session token via fetchWithToken
 
 const fmtUSD = (n: number) =>
   new Intl.NumberFormat("en-US", {
@@ -81,7 +78,7 @@ interface NewsItem {
   image?: string;
 }
 
-// Mock news fallback kalau tidak ada token
+// Mock news fallback kalau backend gagal
 const MOCK_NEWS: NewsItem[] = [
   {
     title: "Bitcoin Breaks Key Resistance Level Amid Institutional Buying",
@@ -243,6 +240,11 @@ function NewsCard({ item, index }: { item: NewsItem; index: number }) {
   );
 }
 
+// ── FiBarChart alias ──────────────────────────────────────────────
+function FiBarChart({ size }: { size: number }) {
+  return <FiActivity size={size} />;
+}
+
 // ── Main Page ─────────────────────────────────────────────────────
 export default function NewsPage() {
   const [gold, setGold] = useState<GoldData | null>(null);
@@ -256,13 +258,14 @@ export default function NewsPage() {
   const [coinFilter, setCoinFilter] = useState<
     "bitcoin" | "ethereum" | "solana"
   >("bitcoin");
-  const [symFilter, setSymFilter] = useState<"BTCUSDT" | "ETHUSDT" | "SOLUSDT">(
-    "BTCUSDT",
-  );
+  const [symFilter, setSymFilter] = useState<
+    "BTCUSDT" | "ETHUSDT" | "SOLUSDT"
+  >("BTCUSDT");
 
   const { data: session } = useSession();
   const token = (session?.user as any)?.accessToken ?? "";
 
+  // ── Fetch market data ─────────────────────────────────────────
   const fetchMarket = useCallback(async () => {
     setLoadMarket(true);
     try {
@@ -293,40 +296,45 @@ export default function NewsPage() {
     }
   }, [coinFilter, symFilter, token]);
 
+  // ── Fetch news dari backend (/market/news) ────────────────────
+  //  Backend sudah handle GNews + API key, FE tinggal consume.
+  //  Response shape dari MarketService.getGoldNews():
+  //    { title, description, content, url, image, publishedAt, source: string }
   const fetchNews = useCallback(async () => {
     setLoadNews(true);
     try {
-      if (GNEWS) {
-        const res = await fetch(
-          `https://gnews.io/api/v4/search?q=crypto+gold+bitcoin&lang=en&max=12&token=${GNEWS}`,
+      const data: any[] = token
+        ? await fetchWithToken(token, "/market/news")
+        : await fetch(`${API}/market/news`).then((r) => r.json());
+
+      if (Array.isArray(data) && data.length > 0) {
+        setNews(
+          data.map((a) => ({
+            title: a.title,
+            description: a.description,
+            url: a.url,
+            publishedAt: a.publishedAt,
+            // Backend returns source as plain string (article.source?.name)
+            source: { name: a.source ?? "Unknown" },
+            image: a.image,
+          })),
         );
-        const data = await res.json();
-        if (data?.articles?.length) {
-          setNews(
-            data.articles.map((a: any) => ({
-              title: a.title,
-              description: a.description,
-              url: a.url,
-              publishedAt: a.publishedAt,
-              source: { name: a.source.name },
-              image: a.image,
-            })),
-          );
-          return;
-        }
+      } else {
+        // Backend available tapi artikel kosong
+        setNews(MOCK_NEWS);
       }
-      // Fallback ke mock
-      setNews(MOCK_NEWS);
     } catch {
+      // Backend down atau GNEWS_API_KEY belum di-set
       setNews(MOCK_NEWS);
     } finally {
       setLoadNews(false);
     }
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     fetchMarket();
   }, [fetchMarket]);
+
   useEffect(() => {
     fetchNews();
   }, [fetchNews]);
@@ -342,6 +350,8 @@ export default function NewsPage() {
     const id = setInterval(() => fetchMarket(), 30_000);
     return () => clearInterval(id);
   }, [fetchMarket]);
+
+  const isMockNews = news.length > 0 && news[0].url === "#";
 
   return (
     <div
@@ -395,7 +405,9 @@ export default function NewsPage() {
           />
           <TickerPill
             label="Emas High/Low"
-            value={gold ? `${fmtUSD(gold.high)} / ${fmtUSD(gold.low)}` : "—"}
+            value={
+              gold ? `${fmtUSD(gold.high)} / ${fmtUSD(gold.low)}` : "—"
+            }
             loading={loadMarket}
           />
           <TickerPill
@@ -417,7 +429,11 @@ export default function NewsPage() {
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+            transition={{
+              duration: 0.4,
+              delay: 0.1,
+              ease: [0.22, 1, 0.36, 1],
+            }}
             className="lg:col-span-2 bg-white border border-slate-100 rounded-3xl p-6 shadow-sm"
           >
             <div className="flex items-center justify-between mb-5">
@@ -434,7 +450,7 @@ export default function NewsPage() {
               )}
             </div>
 
-            {/* Coin + Symbol filter */}
+            {/* Coin filter */}
             <div className="flex gap-2 flex-wrap mb-5">
               {(
                 [
@@ -491,7 +507,9 @@ export default function NewsPage() {
                   },
                   {
                     label: "Volume",
-                    value: Number(analytics.volume.toFixed(2)).toLocaleString(),
+                    value: Number(
+                      analytics.volume.toFixed(2),
+                    ).toLocaleString(),
                     icon: <FiBarChart size={13} />,
                   },
                 ].map((item, i) => (
@@ -610,7 +628,7 @@ export default function NewsPage() {
                 Berita Pasar
               </p>
               <p className="text-slate-400 text-[11px] font-mono mt-0.5">
-                {!GNEWS && (
+                {isMockNews && (
                   <span className="text-amber-500">⚠ Mode demo · </span>
                 )}
                 {news.length} artikel terkini
@@ -632,7 +650,8 @@ export default function NewsPage() {
             </div>
           )}
 
-          {!GNEWS && (
+          {/* Banner hanya muncul kalau fallback ke mock */}
+          {isMockNews && !loadNews && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -644,15 +663,17 @@ export default function NewsPage() {
                 <a
                   href="https://gnews.io"
                   target="_blank"
+                  rel="noopener noreferrer"
                   className="underline"
                 >
                   gnews.io
                 </a>{" "}
                 lalu set{" "}
                 <code className="bg-amber-100 px-1 rounded">
-                  NEXT_PUBLIC_GNEWS_TOKEN
+                  GNEWS_API_KEY
                 </code>{" "}
-                di <code className="bg-amber-100 px-1 rounded">.env</code>
+                di <code className="bg-amber-100 px-1 rounded">.env</code>{" "}
+                server (bukan di frontend).
               </p>
             </motion.div>
           )}
@@ -660,9 +681,4 @@ export default function NewsPage() {
       </div>
     </div>
   );
-}
-
-// Tambahan import yang dibutuhkan (taruh di atas bersama yang lain)
-function FiBarChart({ size }: { size: number }) {
-  return <FiActivity size={size} />;
 }

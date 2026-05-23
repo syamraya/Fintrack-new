@@ -6,29 +6,47 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 export class MarketController {
   constructor(private readonly marketService: MarketService) {}
 
+  @Get('crypto')
+  getCrypto(@Query('coin') coin: string) {
+    return this.marketService.getCryptoPrice(coin ?? 'bitcoin');
+  }
+
   @Get('gold-price')
-  async getPrice() {
+  getGoldPrice() {
     return this.marketService.getGoldPrice();
   }
 
-  @Get('crypto')
-  async getCrypto(@Query('coin') coin: string) {
-    const coinId = coin || 'bitcoin';
-    return this.marketService.getCryptoPrice(coinId);
-  }
-
   @Get('news')
-  @UseGuards(JwtAuthGuard)
- async getNews() {
+  getNews() {
     return this.marketService.getGoldNews();
   }
 
+
+  @UseGuards(JwtAuthGuard)
   @Get('analytics')
-  async getAnalytics(
-    @Query('symbol') symbol: string = 'BTCUSDT',
-    @Query('interval') interval: string = '5m',
-    @Query('limit') limit: string = '20',
+  getAnalytics(
+    @Query('symbol') symbol: string,
+    @Query('interval') interval: string,
+    @Query('limit') limit: string,
   ) {
-    return this.marketService.getAnalytics(symbol, interval, parseInt(limit));
+    return this.marketService.getAnalytics(
+      symbol ?? 'BTCUSDT',
+      interval ?? '5m',
+      Number(limit) || 20,
+    );
+  }
+
+  // Proxy klines dari Binance — FE tidak bisa hit langsung karena ISP block
+  @Get('klines')
+  getKlines(
+    @Query('symbol') symbol: string,
+    @Query('interval') interval: string,
+    @Query('limit') limit: string,
+  ) {
+    return this.marketService.getKlines(
+      symbol ?? 'BTCUSDT',
+      interval ?? '5m',
+      Number(limit) || 500,
+    );
   }
 }
