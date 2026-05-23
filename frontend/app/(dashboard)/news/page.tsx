@@ -593,6 +593,7 @@ export default function NewsPage() {
                   <p className="text-white/30 text-[9px] font-black uppercase tracking-widest mb-1">
                     High
                   </p>
+                  
                   <p className="text-white/80 text-[13px] font-black">
                     {fmtUSD(gold.high)}
                   </p>
