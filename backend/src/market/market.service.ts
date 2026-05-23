@@ -6,14 +6,8 @@ import {
 import axios from 'axios';
 import * as https from 'https';
 
-// ─────────────────────────────────────────────────────────────────
-//  Bypass SSL verification — ISP (Telkom/IndiHome) menginterep
-//  koneksi HTTPS sehingga sertifikat tidak bisa diverifikasi.
-//  HANYA untuk development. Hapus di production.
-// ─────────────────────────────────────────────────────────────────
 const httpsAgent = new https.Agent({ rejectUnauthorized: false });
 
-// ── Simple in-memory cache ────────────────────────────────────────
 const cache = new Map<string, { data: any; expiredAt: number }>();
 
 function getCache(key: string) {
@@ -27,7 +21,6 @@ function setCache(key: string, data: any, ttlMs: number) {
   cache.set(key, { data, expiredAt: Date.now() + ttlMs });
 }
 
-// Semua coin yang didukung — fetch sekaligus 1 request ke CoinGecko
 const SUPPORTED_COINS = ['bitcoin', 'ethereum', 'solana', 'binancecoin', 'ripple'];
 
 const COIN_SYMBOL_MAP: Record<string, string> = {
@@ -38,13 +31,20 @@ const COIN_SYMBOL_MAP: Record<string, string> = {
   ripple: 'XRP',
 };
 
+// Map frontend interval ke CoinGecko days param
+const INTERVAL_TO_DAYS: Record<string, number> = {
+  '1': 1, '3': 1, '5': 1, '15': 1, '30': 2,
+  '60': 7, '120': 14, '240': 30, '720': 60, 'D': 365,
+  // juga support format "15m", "1h", dll
+  '1m': 1, '3m': 1, '5m': 1, '15m': 1, '30m': 2,
+  '1h': 7, '2h': 14, '4h': 30, '1d': 365,
+};
+
 @Injectable()
 export class MarketService {
   private readonly logger = new Logger(MarketService.name);
   private readonly goldUrl = 'https://www.goldapi.io/api/XAU/USD';
-  private readonly binanceUrl = 'https://api.binance.com/api/v3/klines';
 
-  // ── Fetch semua coin sekaligus, cache 2 menit ─────────────────
   private async fetchAllCryptoPrices() {
     const cacheKey = 'crypto_all';
     const cached = getCache(cacheKey);
@@ -67,15 +67,12 @@ export class MarketService {
     return response.data;
   }
 
-  // ── Crypto price (CoinGecko) ──────────────────────────────────
   async getCryptoPrice(coinId: string = 'bitcoin') {
     const id = coinId.toLowerCase();
     try {
       const allData = await this.fetchAllCryptoPrices();
       const data = allData[id];
-
       if (!data) throw new Error(`Koin tidak ditemukan: ${id}`);
-
       return {
         symbol: COIN_SYMBOL_MAP[id] ?? id.toUpperCase(),
         price_usd: data.usd,
@@ -85,90 +82,51 @@ export class MarketService {
       };
     } catch (error: any) {
       this.logger.error(`Gagal ambil harga Crypto (${coinId}): ${error.message}`);
-      throw new InternalServerErrorException(
-        'Gagal mengambil data crypto, pastikan ID koin benar.',
-      );
+      throw new InternalServerErrorException('Gagal mengambil data crypto.');
     }
   }
 
-  // ── Gold price (GoldAPI) ──────────────────────────────────────
   async getGoldPrice() {
     const apiKey = process.env.GOLD_API_KEY;
-
     try {
       const response = await axios.get(this.goldUrl, {
         httpsAgent,
-        headers: {
-          'x-access-token': apiKey,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'x-access-token': apiKey, 'Content-Type': 'application/json' },
       });
-
       const data = response.data;
-
       if (!data || data.error) {
-        throw new InternalServerErrorException(
-          `GoldAPI error: ${data?.error || 'Unknown Error'}`,
-        );
+        throw new InternalServerErrorException(`GoldAPI error: ${data?.error || 'Unknown'}`);
       }
-
       const isMarketClosed = !data.price || data.price === 0;
-
       return {
-        from: 'XAU',
-        to: 'USD',
+        from: 'XAU', to: 'USD',
         price: data.price ?? null,
         high: data.high ?? null,
         low: data.low ?? null,
         prev_close_price: data.prev_close_price ?? null,
-        lastRefreshed: data.timestamp
-          ? new Date(data.timestamp * 1000).toISOString()
-          : null,
+        lastRefreshed: data.timestamp ? new Date(data.timestamp * 1000).toISOString() : null,
         isMock: false,
         marketStatus: isMarketClosed ? 'closed' : 'open',
-        message: isMarketClosed
-          ? 'Market emas sedang tutup, menampilkan harga terakhir.'
-          : null,
+        message: isMarketClosed ? 'Market emas sedang tutup.' : null,
       };
     } catch (error: any) {
       this.logger.error(`GoldAPI Crash: ${error.message}`);
-      throw new InternalServerErrorException(
-        'Data gold tidak tersedia saat ini.',
-      );
+      throw new InternalServerErrorException('Data gold tidak tersedia.');
     }
   }
 
-  // ── News (GNews) ──────────────────────────────────────────────
-  //  Return [] kalau gagal — jangan throw, biar FE pakai mock.
   async getGoldNews() {
     const apiKey = process.env.GNEWS_API_KEY;
-
-    if (!apiKey) {
-      this.logger.warn('GNEWS_API_KEY belum di-set, return array kosong');
-      return [];
-    }
-
+    if (!apiKey) { this.logger.warn('GNEWS_API_KEY belum di-set'); return []; }
     try {
       const response = await axios.get('https://gnews.io/api/v4/search', {
         httpsAgent,
-        params: {
-          q: 'gold market OR crypto OR bitcoin OR finance',
-          lang: 'en',
-          max: 10,
-          apikey: apiKey,
-        },
+        params: { q: 'gold market OR crypto OR bitcoin OR finance', lang: 'en', max: 10, apikey: apiKey },
       });
-
-      const articles = response.data.articles || [];
-
-      return articles.map((article: any) => ({
-        title: article.title,
-        description: article.description,
-        content: article.content,
-        url: article.url,
-        image: article.image,
-        publishedAt: article.publishedAt,
-        source: article.source?.name || 'Unknown Source',
+      return (response.data.articles || []).map((a: any) => ({
+        title: a.title, description: a.description, content: a.content,
+        url: a.url, image: a.image, publishedAt: a.publishedAt,
+        source: a.source?.name || 'Unknown Source',
       }));
     } catch (error: any) {
       this.logger.error(`GNews API Error: ${error.message}`);
@@ -176,62 +134,9 @@ export class MarketService {
     }
   }
 
-  // ── Analytics (Binance) ───────────────────────────────────────
-  async getAnalytics(
-    symbol: string = 'BTCUSDT',
-    interval: string = '5m',
-    limit: number = 20,
-  ) {
-    try {
-      const response = await axios.get(this.binanceUrl, {
-        httpsAgent,
-        params: { symbol, interval, limit },
-      });
-
-      const candles = response.data;
-
-      if (!candles || candles.length === 0) {
-        throw new Error('Tidak ada data candle dari Binance');
-      }
-
-      const latest = candles[candles.length - 1];
-      const closes = candles.map((c: any[]) => parseFloat(c[4]));
-
-      const high = parseFloat(latest[2]);
-      const low = parseFloat(latest[3]);
-      const close = parseFloat(latest[4]);
-      const volume = parseFloat(latest[5]);
-      const oldest = closes[0];
-
-      const volatility = parseFloat((((high - low) / low) * 100).toFixed(2));
-      const trendScore = parseFloat((((close - oldest) / oldest) * 100).toFixed(2));
-      const sentiment = trendScore > 0 ? 'Bullish' : trendScore < 0 ? 'Bearish' : 'Neutral';
-
-      return {
-        symbol,
-        price: close,
-        high,
-        low,
-        volume,
-        volatility,
-        trendScore,
-        sentiment,
-        time: new Date(latest[0]).toISOString(),
-        source: 'binance',
-        isMock: false,
-      };
-    } catch (error: any) {
-      this.logger.error(`Binance Analytics Error: ${error.message}`);
-      throw new InternalServerErrorException(
-        'Gagal mengambil data analytics dari Binance.',
-      );
-    }
-  }
-
-  // ── Klines proxy (Binance) ────────────────────────────────────
-  //  FE tidak bisa hit Binance langsung karena diblokir ISP.
-  //  Semua request chart diproxy lewat sini.
-  //  Cache 30 detik supaya tidak spam saat chart re-render.
+  // ── FIX: Ganti Binance → CoinGecko OHLC (tidak kena 451) ─────
+  // CoinGecko /coins/{id}/ohlc return: [[timestamp, open, high, low, close], ...]
+  // Dikonversi ke format Binance-like supaya frontend chart tidak perlu diubah
   async getKlines(
     symbol: string = 'BTCUSDT',
     interval: string = '5m',
@@ -242,17 +147,90 @@ export class MarketService {
     if (cached) return cached;
 
     try {
-      const response = await axios.get(this.binanceUrl, {
-        httpsAgent,
-        params: { symbol, interval, limit },
-      });
-      setCache(cacheKey, response.data, 30_000);
-      return response.data;
+      // Map symbol BTCUSDT → bitcoin
+      const coinId = this.symbolToCoinId(symbol);
+      const days = INTERVAL_TO_DAYS[interval] ?? 1;
+
+      const response = await axios.get(
+        `https://api.coingecko.com/api/v3/coins/${coinId}/ohlc`,
+        { httpsAgent, params: { vs_currency: 'usd', days } },
+      );
+
+      // CoinGecko OHLC: [[time, open, high, low, close]]
+      // Convert ke Binance klines format: [time, open, high, low, close, volume, ...]
+      const data = response.data.map((c: number[]) => [
+        c[0],           // open time
+        String(c[1]),   // open
+        String(c[2]),   // high
+        String(c[3]),   // low
+        String(c[4]),   // close
+        '0',            // volume (CoinGecko OHLC tidak include volume)
+        c[0] + 60000,   // close time
+        '0', '0', '0', '0', '0',
+      ]);
+
+      // Ambil limit candle terakhir
+      const sliced = data.slice(-limit);
+      setCache(cacheKey, sliced, 30_000);
+      return sliced;
     } catch (error: any) {
       this.logger.error(`Klines Error: ${error.message}`);
-      throw new InternalServerErrorException(
-        'Gagal mengambil data klines dari Binance.',
-      );
+      throw new InternalServerErrorException('Gagal mengambil data klines.');
     }
+  }
+
+  // ── FIX: Analytics juga pakai CoinGecko ──────────────────────
+  async getAnalytics(
+    symbol: string = 'BTCUSDT',
+    interval: string = '5m',
+    limit: number = 20,
+  ) {
+    try {
+      const coinId = this.symbolToCoinId(symbol);
+      const days = INTERVAL_TO_DAYS[interval] ?? 1;
+
+      const response = await axios.get(
+        `https://api.coingecko.com/api/v3/coins/${coinId}/ohlc`,
+        { httpsAgent, params: { vs_currency: 'usd', days } },
+      );
+
+      const candles: number[][] = response.data;
+      if (!candles || candles.length === 0) throw new Error('Tidak ada data OHLC');
+
+      const slice = candles.slice(-limit);
+      const latest = slice[slice.length - 1];
+      const closes = slice.map(c => c[4]);
+
+      const high = latest[2];
+      const low = latest[3];
+      const close = latest[4];
+      const oldest = closes[0];
+
+      const volatility = parseFloat((((high - low) / low) * 100).toFixed(2));
+      const trendScore = parseFloat((((close - oldest) / oldest) * 100).toFixed(2));
+      const sentiment = trendScore > 0 ? 'Bullish' : trendScore < 0 ? 'Bearish' : 'Neutral';
+
+      return {
+        symbol, price: close, high, low,
+        volume: 0, // CoinGecko OHLC tidak include volume
+        volatility, trendScore, sentiment,
+        time: new Date(latest[0]).toISOString(),
+        source: 'coingecko',
+        isMock: false,
+      };
+    } catch (error: any) {
+      this.logger.error(`Analytics Error: ${error.message}`);
+      throw new InternalServerErrorException('Gagal mengambil data analytics.');
+    }
+  }
+
+  // ── Helper: BTCUSDT → bitcoin, ETHUSDT → ethereum, dll ───────
+  private symbolToCoinId(symbol: string): string {
+    const map: Record<string, string> = {
+      'BTCUSDT': 'bitcoin', 'ETHUSDT': 'ethereum',
+      'SOLUSDT': 'solana',  'BNBUSDT': 'binancecoin',
+      'XRPUSDT': 'ripple',
+    };
+    return map[symbol.toUpperCase()] ?? 'bitcoin';
   }
 }
