@@ -39,64 +39,107 @@ export class AuthService {
      await this.mailService.sendMail(
   dto.email,
   'Verify your FinTrack Account',
-  `
-  <div style="background:#f5f4f0;padding:48px 20px;font-family:Georgia,serif;">
-    <div style="max-width:520px;margin:0 auto;background:#ffffff;border:1px solid #e8e6e0;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
-      
-      <!-- Header -->
-      <div style="padding:24px 36px;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center;">
-        <div style="display:flex;align-items:center;gap:10px;">
-          <div style="width:32px;height:32px;background:#1a1a18;border-radius:8px;display:flex;align-items:center;justify-content:center;font-style:italic;color:#fff;font-size:14px;">F</div>
-          <span style="font-style:italic;font-size:17px;color:#1a1a18;letter-spacing:-0.3px;">FinTrack</span>
-        </div>
-        <span style="font-family:monospace;font-size:10px;color:#aaa89f;letter-spacing:0.5px;">ACCOUNT VERIFICATION</span>
+      `
+      <div style="background:#ffffff; padding:40px 20px; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:560px; margin:0 auto; border-collapse:collapse;">
+          
+          <tr>
+            <td style="padding-bottom:32px; border-bottom:1px solid #f2f2f2;">
+              <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td align="left" valign="middle">
+                    <table cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="width:36px; height:36px; background:#111111; border-radius:8px; text-align:center; font-family:Georgia,serif; font-style:italic; color:#ffffff; font-size:16px; line-height:36px; font-weight:bold;">F</td>
+                        <td style="font-family:Georgia,serif; font-style:italic; font-size:18px; color:#111111; padding-left:12px; font-weight:normal; letter-spacing:-0.5px;">FinTrack</td>
+                      </tr>
+                    </table>
+                  </td>
+                  <td align="right" valign="middle" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:11px; font-weight:600; color:#999999; letter-spacing:1px; text-transform:uppercase;">
+                    ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding-top:40px;">
+              <p style="font-size:11px; font-weight:700; letter-spacing:1.5px; color:#999999; text-transform:uppercase; margin:0 0 16px;">Account Verification</p>
+              <h1 style="font-family:Georgia,serif; font-size:32px; font-weight:400; color:#111111; line-height:1.2; margin:0 0 24px; letter-spacing:-0.5px;">Verify your<br/><span style="font-style:italic;">email address.</span></h1>
+              <p style="font-size:14px; color:#555555; line-height:1.6; margin:0 0 32px; font-weight:400;">
+                Welcome! Enter the one-time code below to activate your <strong style="color:#111111; font-weight:600;">FinTrack</strong> account. This code is valid for 5 minutes and can only be used once.
+              </p>
+
+              <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#faf9f6; border:1px solid #f0ede6; border-radius:12px; margin-bottom:32px; border-collapse:separate;">
+                <tr>
+                  <td style="padding:16px 24px; border-bottom:1px solid #f0ede6;">
+                    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                      <tr>
+                        <td align="left" style="font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:#999999;">One-Time Code</td>
+                        <td align="right" style="font-size:12px; color:#d9383a; font-weight:500;">⏱ &nbsp;5 min</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:32px 24px; text-align:center;">
+                    <table cellpadding="0" cellspacing="0" border="0" align="center">
+                      <tr>
+                        ${otp.split('').slice(0,3).map(d => `
+                          <td style="width:52px; height:64px; background:#ffffff; border:1px solid #e5e5e0; border-radius:10px; text-align:center; font-size:28px; font-weight:500; color:#111111; box-shadow:0 1px 2px rgba(0,0,0,0.02); padding:0;">${d}</td>
+                          <td style="width:6px;"></td>
+                        `).join('')}
+                        <td style="font-size:18px; color:#e5e5e0; padding:0 8px 0 2px; text-align:center;">·</td>
+                        ${otp.split('').slice(3,6).map((d, idx) => `
+                          <td style="width:52px; height:64px; background:#ffffff; border:1px solid #e5e5e0; border-radius:10px; text-align:center; font-size:28px; font-weight:500; color:#111111; box-shadow:0 1px 2px rgba(0,0,0,0.02); padding:0;">${d}</td>
+                          ${idx < 2 ? '<td style="width:6px;"></td>' : ''}
+                        `).join('')}
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f0f7f4; border:1px solid #e1efe8; border-radius:10px; margin-bottom:32px; border-collapse:separate;">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                      <tr>
+                        <td valign="top" style="color:#2a6147; font-size:14px; width:24px; font-weight:normal; line-height:1.5;">✓</td>
+                        <td valign="top" style="font-size:13px; color:#2a6147; line-height:1.5; font-weight:400;">Once verified, your account will be active and you can start tracking your finances right away.</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <hr style="border:none; border-top:1px solid #ededed; margin:0 0 32px;"/>
+              <p style="font-size:13px; color:#999999; line-height:1.6; margin:0 0 40px;">
+                Didn't create a FinTrack account? You can safely ignore this email — no action is needed and your code will expire automatically. <a href="https://fintrack.app/support" style="color:#666666; text-decoration:underline;">Contact support</a> if you have concerns.
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding-top:24px; border-top:1px solid #f2f2f2;">
+              <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td align="left" style="font-size:11px; font-weight:600; color:#999999; letter-spacing:1px;">© 2026 FINTRACK</td>
+                  <td align="right" style="font-size:12px; color:#999999;">
+                    <a href="https://fintrack.app/support" style="color:#999999; text-decoration:none; margin-right:16px;">Support</a>
+                    <a href="https://fintrack.app/privacy" style="color:#999999; text-decoration:none; margin-right:16px;">Privacy</a>
+                    <a href="https://fintrack.app/unsubscribe" style="color:#999999; text-decoration:none;">Unsubscribe</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+        </table>
       </div>
-
-      <!-- Body -->
-      <div style="padding:36px 36px 28px;">
-        <p style="font-family:monospace;font-size:10px;letter-spacing:2px;color:#aaa89f;text-transform:uppercase;margin:0 0 10px;">Account Verification</p>
-        <h1 style="font-style:italic;font-size:26px;font-weight:400;color:#1a1a18;line-height:1.25;letter-spacing:-0.5px;margin:0 0 12px;">Verify your<br/><em>email address.</em></h1>
-        <p style="font-size:14px;font-weight:300;color:#6b6860;line-height:1.75;margin:0 0 32px;">
-          Welcome! Enter the one-time code below to activate your <strong style="color:#1a1a18;font-weight:500;">FinTrack</strong> account. This code is valid for 5 minutes and can only be used once.
-        </p>
-
-        <!-- OTP Block -->
-        <div style="border:1px solid #e8e6e0;border-radius:12px;overflow:hidden;margin-bottom:28px;">
-          <div style="padding:16px 24px;background:#fafaf8;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-family:monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#aaa89f;">One-Time Code</span>
-            <span style="font-family:monospace;font-size:11px;color:#c0392b;">⏱ 5 min</span>
-          </div>
-          <div style="padding:28px 24px;text-align:center;">
-            <div style="display:inline-flex;gap:6px;align-items:center;">
-              ${otp.split('').slice(0,3).map(d => `<div style="width:48px;height:60px;background:#fff;border:1px solid #e8e6e0;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-family:monospace;font-size:26px;font-weight:500;color:#1a1a18;box-shadow:0 1px 3px rgba(0,0,0,0.04);">${d}</div>`).join('')}
-              <span style="font-family:monospace;font-size:20px;color:#e8e6e0;margin:0 4px;">·</span>
-              ${otp.split('').slice(3,6).map(d => `<div style="width:48px;height:60px;background:#fff;border:1px solid #e8e6e0;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-family:monospace;font-size:26px;font-weight:500;color:#1a1a18;box-shadow:0 1px 3px rgba(0,0,0,0.04);">${d}</div>`).join('')}
-            </div>
-          </div>
-        </div>
-
-        <!-- Notice -->
-        <div style="background:#f0f7f3;border:1px solid #c8dfd4;border-radius:10px;padding:14px 16px;margin-bottom:24px;display:flex;gap:10px;">
-          <span style="color:#2d6a4f;font-size:14px;">✓</span>
-          <span style="font-size:13px;color:#2d6a4f;line-height:1.6;">Once verified, your account will be active and you can start tracking your finances right away.</span>
-        </div>
-
-        <hr style="border:none;border-top:1px solid #f0ede8;margin:4px 0 24px;"/>
-        <p style="font-size:12px;font-weight:300;color:#aaa89f;line-height:1.7;margin:0;">
-          Didn't create a FinTrack account? You can safely ignore this email — your code will expire automatically.
-        </p>
-      </div>
-
-      <!-- Footer -->
-      <div style="padding:18px 36px 24px;border-top:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-family:monospace;font-size:10px;color:#aaa89f;letter-spacing:0.5px;">© 2026 FINTRACK</span>
-        <span style="font-family:monospace;font-size:10px;color:#aaa89f;">fintrack.app</span>
-      </div>
-
-    </div>
-  </div>
-  `
-);
+      `
+    );
 
       return { message: 'Verification code sent! Please check your inbox or spam folder.' };
     } catch (error) {
@@ -192,65 +235,107 @@ export class AuthService {
       await this.mailService.sendMail(
   dto.email,
   'Reset your FinTrack Password',
-  `
-  <div style="background:#f5f4f0;padding:48px 20px;font-family:Georgia,serif;">
-    <div style="max-width:520px;margin:0 auto;background:#ffffff;border:1px solid #e8e6e0;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
-      
-      <!-- Header -->
-      <div style="padding:24px 36px;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center;">
-        <div style="display:flex;align-items:center;gap:10px;">
-          <div style="width:32px;height:32px;background:#1a1a18;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-style:italic;color:#fff;font-size:14px;">F</div>
-          <span style="font-style:italic;font-size:17px;color:#1a1a18;letter-spacing:-0.3px;">FinTrack</span>
-        </div>
-        <span style="font-family:monospace;font-size:10px;color:#aaa89f;letter-spacing:0.5px;">PASSWORD RESET</span>
-      </div>
+      `
+      <div style="background:#ffffff; padding:40px 20px; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:560px; margin:0 auto; border-collapse:collapse;">
+          
+          <tr>
+            <td style="padding-bottom:32px; border-bottom:1px solid #f2f2f2;">
+              <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td align="left" valign="middle">
+                    <table cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td style="width:36px; height:36px; background:#111111; border-radius:8px; text-align:center; font-family:Georgia,serif; font-style:italic; color:#ffffff; font-size:16px; line-height:36px; font-weight:bold;">F</td>
+                        <td style="font-family:Georgia,serif; font-style:italic; font-size:18px; color:#111111; padding-left:12px; font-weight:normal; letter-spacing:-0.5px;">FinTrack</td>
+                      </tr>
+                    </table>
+                  </td>
+                  <td align="right" valign="middle" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; font-size:11px; font-weight:600; color:#999999; letter-spacing:1px; text-transform:uppercase;">
+                    ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
 
-      <!-- Body -->
-      <div style="padding:36px 36px 28px;">
-        <p style="font-family:monospace;font-size:10px;letter-spacing:2px;color:#aaa89f;text-transform:uppercase;margin:0 0 10px;">Password Reset</p>
-        <h1 style="font-style:italic;font-size:26px;font-weight:400;color:#1a1a18;line-height:1.25;letter-spacing:-0.5px;margin:0 0 12px;">Reset your<br/><em>password.</em></h1>
-        <p style="font-size:14px;font-weight:300;color:#6b6860;line-height:1.75;margin:0 0 32px;">
-          Hi <strong style="color:#1a1a18;font-weight:500;">${user.name || 'there'}</strong> — we received a request to reset the password on your FinTrack account. Use the code below to set a new one.
-        </p>
+          <tr>
+            <td style="padding-top:40px;">
+              <p style="font-size:11px; font-weight:700; letter-spacing:1.5px; color:#999999; text-transform:uppercase; margin:0 0 16px;">Password Reset</p>
+              <h1 style="font-family:Georgia,serif; font-size:32px; font-weight:400; color:#111111; line-height:1.2; margin:0 0 24px; letter-spacing:-0.5px;">Reset your<br/><span style="font-style:italic;">password.</span></h1>
+              <p style="font-size:14px; color:#555555; line-height:1.6; margin:0 0 32px; font-weight:400;">
+                Hi <strong style="color:#111111; font-weight:600;">${user.name || 'there'}</strong> — we received a request to reset the password on your FinTrack account. Use the code below to set a new one.
+              </p>
 
-        <!-- OTP Block -->
-        <div style="border:1px solid #e8e6e0;border-radius:12px;overflow:hidden;margin-bottom:28px;">
-          <div style="padding:16px 24px;background:#fafaf8;border-bottom:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-family:monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#aaa89f;">Reset Code</span>
-            <span style="font-family:monospace;font-size:11px;color:#c0392b;">⏱ 5 min</span>
-          </div>
-          <div style="padding:28px 24px;text-align:center;">
-            <div style="display:inline-flex;gap:6px;align-items:center;">
-              ${otp.split('').slice(0,3).map(d => `<div style="width:48px;height:60px;background:#fff;border:1px solid #e8e6e0;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-family:monospace;font-size:26px;font-weight:500;color:#1a1a18;box-shadow:0 1px 3px rgba(0,0,0,0.04);">${d}</div>`).join('')}
-              <span style="font-family:monospace;font-size:20px;color:#e8e6e0;margin:0 4px;">·</span>
-              ${otp.split('').slice(3,6).map(d => `<div style="width:48px;height:60px;background:#fff;border:1px solid #e8e6e0;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-family:monospace;font-size:26px;font-weight:500;color:#1a1a18;box-shadow:0 1px 3px rgba(0,0,0,0.04);">${d}</div>`).join('')}
-            </div>
-          </div>
-        </div>
+              <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#faf9f6; border:1px solid #f0ede6; border-radius:12px; margin-bottom:32px; border-collapse:separate;">
+                <tr>
+                  <td style="padding:16px 24px; border-bottom:1px solid #f0ede6;">
+                    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                      <tr>
+                        <td align="left" style="font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:#999999;">Reset Code</td>
+                        <td align="right" style="font-size:12px; color:#d9383a; font-weight:500;">⏱ &nbsp;5 min</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:32px 24px; text-align:center;">
+                    <table cellpadding="0" cellspacing="0" border="0" align="center">
+                      <tr>
+                        ${otp.split('').slice(0,3).map(d => `
+                          <td style="width:52px; height:64px; background:#ffffff; border:1px solid #e5e5e0; border-radius:10px; text-align:center; font-size:28px; font-weight:500; color:#111111; box-shadow:0 1px 2px rgba(0,0,0,0.02); padding:0;">${d}</td>
+                          <td style="width:6px;"></td>
+                        `).join('')}
+                        <td style="font-size:18px; color:#e5e5e0; padding:0 8px 0 2px; text-align:center;">·</td>
+                        ${otp.split('').slice(3,6).map((d, idx) => `
+                          <td style="width:52px; height:64px; background:#ffffff; border:1px solid #e5e5e0; border-radius:10px; text-align:center; font-size:28px; font-weight:500; color:#111111; box-shadow:0 1px 2px rgba(0,0,0,0.02); padding:0;">${d}</td>
+                          ${idx < 2 ? '<td style="width:6px;"></td>' : ''}
+                        `).join('')}
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
 
-        <!-- Notice -->
-        <div style="background:#fdf4f3;border:1px solid #f0c8c3;border-radius:10px;padding:14px 16px;margin-bottom:24px;display:flex;gap:10px;">
-          <span style="color:#922b21;font-size:14px;">!</span>
-          <span style="font-size:13px;color:#922b21;line-height:1.6;">If you didn't request this, your account is safe — simply ignore this email. Your password won't change unless this code is used.</span>
-        </div>
+              <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#fff5f5; border:1px solid #fcdede; border-radius:10px; margin-bottom:32px; border-collapse:separate;">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                      <tr>
+                        <td valign="top" style="color:#b33939; font-size:14px; width:24px; font-weight:bold; line-height:1.5;">!</td>
+                        <td valign="top" style="font-size:13px; color:#b33939; line-height:1.5; font-weight:400;">If you didn't request this, your account is safe — simply ignore this email. Your password won't change unless this code is used.</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
 
-        <hr style="border:none;border-top:1px solid #f0ede8;margin:4px 0 24px;"/>
-        <p style="font-size:12px;font-weight:300;color:#aaa89f;line-height:1.7;margin:0;">
-          For your security, this code expires in 5 minutes and is single-use only. Never share this code with anyone.
-        </p>
-      </div>
+              <hr style="border:none; border-top:1px solid #ededed; margin:0 0 32px;"/>
+              <p style="font-size:13px; color:#999999; line-height:1.6; margin:0 0 40px;">
+                For your security, this code expires in 5 minutes and is single-use only. Never share this code with anyone. FinTrack support will never ask for it. <a href="https://fintrack.app/security" style="color:#666666; text-decoration:underline;">Learn about account security →</a>
+              </p>
+            </td>
+          </tr>
 
-      <!-- Footer -->
-      <div style="padding:18px 36px 24px;border-top:1px solid #f0ede8;display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-family:monospace;font-size:10px;color:#aaa89f;letter-spacing:0.5px;">© 2026 FINTRACK</span>
-        <span style="font-family:monospace;font-size:10px;color:#aaa89f;">fintrack.app</span>
-      </div>
+          <tr>
+            <td style="padding-top:24px; border-top:1px solid #f2f2f2;">
+              <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                  <td align="left" style="font-size:11px; font-weight:600; color:#999999; letter-spacing:1px;">© 2026 FINTRACK</td>
+                  <td align="right" style="font-size:12px; color:#999999;">
+                    <a href="https://fintrack.app/support" style="color:#999999; text-decoration:none; margin-right:16px;">Support</a>
+                    <a href="https://fintrack.app/privacy" style="color:#999999; text-decoration:none; margin-right:16px;">Privacy</a>
+                    <a href="https://fintrack.app/unsubscribe" style="color:#999999; text-decoration:none;">Unsubscribe</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
 
-    </div>
-  </div>
-  `
-);
-
+        </table>
+      </div>  
+      `
+    );
       return { message: 'OTP code sent successfully! Please check your email.' };
     } catch (error) {
       console.error('======= DEBUG SMTP FORGOT ERROR =======');

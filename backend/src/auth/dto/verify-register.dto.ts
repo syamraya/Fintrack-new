@@ -11,8 +11,7 @@ export class VerifyRegisterDto {
 
   @IsString()
   @MinLength(6, { message: 'Password minimal 6 karakter' })
-  password: string; // Dikirim lagi dari FE untuk dieksekusi create akun
-
+  password: string; 
   @IsString()
   @IsNotEmpty()
   name: string;
