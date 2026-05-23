@@ -86,34 +86,58 @@ export class MarketService {
     }
   }
 
-  async getGoldPrice() {
-    const apiKey = process.env.GOLD_API_KEY;
-    try {
-      const response = await axios.get(this.goldUrl, {
-        httpsAgent,
-        headers: { 'x-access-token': apiKey, 'Content-Type': 'application/json' },
-      });
-      const data = response.data;
-      if (!data || data.error) {
-        throw new InternalServerErrorException(`GoldAPI error: ${data?.error || 'Unknown'}`);
-      }
-      const isMarketClosed = !data.price || data.price === 0;
-      return {
-        from: 'XAU', to: 'USD',
-        price: data.price ?? null,
-        high: data.high ?? null,
-        low: data.low ?? null,
-        prev_close_price: data.prev_close_price ?? null,
-        lastRefreshed: data.timestamp ? new Date(data.timestamp * 1000).toISOString() : null,
-        isMock: false,
-        marketStatus: isMarketClosed ? 'closed' : 'open',
-        message: isMarketClosed ? 'Market emas sedang tutup.' : null,
-      };
-    } catch (error: any) {
-      this.logger.error(`GoldAPI Crash: ${error.message}`);
-      throw new InternalServerErrorException('Data gold tidak tersedia.');
-    }
+async getGoldPrice() {
+  const apiKey = process.env.GOLD_API_KEY;
+
+  if (!apiKey) {
+    return {
+      from: 'XAU', to: 'USD',
+      price: 3320.50, high: 3340.00, low: 3300.00,
+      prev_close_price: 3315.00,
+      lastRefreshed: new Date().toISOString(),
+      isMock: true, marketStatus: 'closed', message: 'No API key',
+    };
   }
+
+  try {
+    const response = await axios.get(this.goldUrl, {
+      httpsAgent,
+      headers: { 'x-access-token': apiKey, 'Content-Type': 'application/json' },
+    });
+
+    const data = response.data;
+
+    // FIX: jangan throw kalau data.error, coba pakai prev_close_price dulu
+    const isMarketClosed = !data.price || data.price === 0;
+    const effectivePrice = isMarketClosed
+      ? (data.prev_close_price ?? null)
+      : data.price;
+
+    return {
+      from: 'XAU', to: 'USD',
+      price: effectivePrice,
+      high: data.high ?? null,
+      low: data.low ?? null,
+      prev_close_price: data.prev_close_price ?? null,
+      lastRefreshed: data.timestamp ? new Date(data.timestamp * 1000).toISOString() : null,
+      isMock: false,
+      marketStatus: isMarketClosed ? 'closed' : 'open',
+      message: isMarketClosed ? 'Market emas sedang tutup.' : null,
+    };
+  } catch (error: any) {
+    this.logger.error(`GoldAPI Crash: ${error.message}`);
+    // FIX: jangan throw 500 — return mock supaya frontend tetap jalan
+    return {
+      from: 'XAU', to: 'USD',
+      price: null, high: null, low: null,
+      prev_close_price: null,
+      lastRefreshed: null,
+      isMock: true,
+      marketStatus: 'closed',
+      message: 'Data tidak tersedia saat ini.',
+    };
+  }
+}
 
   async getGoldNews() {
     const apiKey = process.env.GNEWS_API_KEY;
