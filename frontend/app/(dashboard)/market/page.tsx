@@ -15,7 +15,6 @@ import {
   type CandlestickData,
   type Time,
 } from "lightweight-charts";
-
 import {
   FiTrendingUp,
   FiTrendingDown,
@@ -24,41 +23,28 @@ import {
 } from "react-icons/fi";
 
 const API = process.env.NEXT_PUBLIC_BASE_API_URL ?? "http://localhost:3001";
-const BINANCE = "https://api.binance.com/api/v3";
 
-// use NextAuth session token via fetchWithToken
-
-// ── COINS & INTERVALS ─────────────────────────────────────────────
+// ── COINS ─────────────────────────────────────────────────────────
+// geckoId  = ID untuk CoinGecko API (dikirim ke backend /market/crypto)
+// symbol   = pasangan trading di Binance (untuk chart & analytics)
 const COINS = [
-  {
-    id: "bitcoin",
-    symbol: "BTCUSDT",
-    label: "BTC",
-    name: "Bitcoin",
-    icon: "₿",
-  },
-  {
-    id: "ethereum",
-    symbol: "ETHUSDT",
-    label: "ETH",
-    name: "Ethereum",
-    icon: "Ξ",
-  },
-  { id: "solana", symbol: "SOLUSDT", label: "SOL", name: "Solana", icon: "◎" },
-  { id: "bnb", symbol: "BNBUSDT", label: "BNB", name: "BNB", icon: "B" },
-  { id: "ripple", symbol: "XRPUSDT", label: "XRP", name: "Ripple", icon: "✕" },
+  { id: "bitcoin",  geckoId: "bitcoin",     symbol: "BTCUSDT", label: "BTC", name: "Bitcoin",  icon: "₿" },
+  { id: "ethereum", geckoId: "ethereum",    symbol: "ETHUSDT", label: "ETH", name: "Ethereum", icon: "Ξ" },
+  { id: "solana",   geckoId: "solana",      symbol: "SOLUSDT", label: "SOL", name: "Solana",   icon: "◎" },
+  { id: "bnb",      geckoId: "binancecoin", symbol: "BNBUSDT", label: "BNB", name: "BNB",      icon: "B" },
+  { id: "ripple",   geckoId: "ripple",      symbol: "XRPUSDT", label: "XRP", name: "Ripple",   icon: "✕" },
 ] as const;
 
 const INTERVALS = [
-  { label: "1m", value: "1m" },
-  { label: "5m", value: "5m" },
+  { label: "1m",  value: "1m"  },
+  { label: "5m",  value: "5m"  },
   { label: "15m", value: "15m" },
-  { label: "1h", value: "1h" },
-  { label: "4h", value: "4h" },
-  { label: "1D", value: "1d" },
+  { label: "1h",  value: "1h"  },
+  { label: "4h",  value: "4h"  },
+  { label: "1D",  value: "1d"  },
 ] as const;
 
-type CoinId = (typeof COINS)[number]["id"];
+type CoinId   = (typeof COINS)[number]["id"];
 type Interval = (typeof INTERVALS)[number]["value"];
 
 // ── HELPERS ───────────────────────────────────────────────────────
@@ -79,46 +65,38 @@ const fmtIDR = (n: number) =>
 
 const fmtVol = (n: number) => {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  if (n >= 1_000)     return `${(n / 1_000).toFixed(1)}K`;
   return n.toFixed(2);
 };
 
 // ── TYPES ─────────────────────────────────────────────────────────
 interface CryptoPrice {
-  symbol: string;
-  price_usd: number;
-  price_idr: number;
-  change_24h: number;
+  symbol:       string;
+  price_usd:    number;
+  price_idr:    number;
+  change_24h:   number;
   last_updated: string;
 }
 
 interface Analytics {
-  price: number;
-  high: number;
-  low: number;
-  volume: number;
+  price:      number;
+  high:       number;
+  low:        number;
+  volume:     number;
   volatility: number;
   trendScore: number;
-  sentiment: "Bullish" | "Bearish" | "Neutral";
+  sentiment:  "Bullish" | "Bearish" | "Neutral";
 }
 
 // ── SHARED COMPONENTS ─────────────────────────────────────────────
 function Skeleton({ className = "" }: { className?: string }) {
-  return (
-    <div className={`animate-pulse rounded-2xl bg-slate-100 ${className}`} />
-  );
+  return <div className={`animate-pulse rounded-2xl bg-slate-100 ${className}`} />;
 }
 
 function StatBox({
-  label,
-  value,
-  sub,
-  loading,
+  label, value, sub, loading,
 }: {
-  label: string;
-  value: string;
-  sub?: string;
-  loading: boolean;
+  label: string; value: string; sub?: string; loading: boolean;
 }) {
   return (
     <div className="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm">
@@ -128,9 +106,7 @@ function StatBox({
       {loading ? (
         <Skeleton className="w-28 h-5" />
       ) : (
-        <p className="text-slate-800 text-[18px] font-black tracking-tight">
-          {value}
-        </p>
+        <p className="text-slate-800 text-[18px] font-black tracking-tight">{value}</p>
       )}
       {sub && !loading && (
         <p className="text-slate-400 text-[10px] font-mono mt-1">{sub}</p>
@@ -140,42 +116,40 @@ function StatBox({
 }
 
 // ── CANDLESTICK CHART ─────────────────────────────────────────────
-function CandlestickChart({
-  symbol,
-  interval,
-}: {
-  symbol: string;
-  interval: Interval;
-}) {
+// Chart fetch klines via backend (/market/klines) bukan langsung ke
+// Binance — karena Binance diblokir ISP (Telkom/IndiHome).
+function CandlestickChart({ symbol, interval }: { symbol: string; interval: Interval }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const chartRef = useRef<IChartApi | null>(null);
-  const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
-  const volumeRef = useRef<ISeriesApi<"Histogram"> | null>(null);
+  const chartRef     = useRef<IChartApi | null>(null);
+  const seriesRef    = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const volumeRef    = useRef<ISeriesApi<"Histogram"> | null>(null);
 
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [hoveredCandle, setHoveredCandle] =
-    useState<CandlestickData<Time> | null>(null);
+  const [error,   setError  ] = useState(false);
+  const [hoveredCandle, setHoveredCandle] = useState<CandlestickData<Time> | null>(null);
+
+  const { data: session } = useSession();
+  const token = (session?.user as any)?.accessToken ?? "";
 
   const fetchCandles = useCallback(async () => {
     setLoading(true);
     setError(false);
     try {
-      const res = await fetch(
-        `${BINANCE}/klines?symbol=${symbol}&interval=${interval}&limit=500`,
-      );
-      const raw: any[][] = await res.json();
+      // Proxy via backend — tidak hit Binance langsung
+      const raw: any[][] = token
+        ? await fetchWithToken(token, `/market/klines?symbol=${symbol}&interval=${interval}&limit=500`)
+        : await fetch(`${API}/market/klines?symbol=${symbol}&interval=${interval}&limit=500`).then(r => r.json());
 
       const candles: CandlestickData<Time>[] = raw.map((c) => ({
-        time: Math.floor(c[0] / 1000) as Time,
-        open: parseFloat(c[1]),
-        high: parseFloat(c[2]),
-        low: parseFloat(c[3]),
+        time:  Math.floor(c[0] / 1000) as Time,
+        open:  parseFloat(c[1]),
+        high:  parseFloat(c[2]),
+        low:   parseFloat(c[3]),
         close: parseFloat(c[4]),
       }));
 
       const volumes = raw.map((c) => ({
-        time: Math.floor(c[0] / 1000) as Time,
+        time:  Math.floor(c[0] / 1000) as Time,
         value: parseFloat(c[5]),
         color: parseFloat(c[4]) >= parseFloat(c[1]) ? "#3b82f620" : "#ef444420",
       }));
@@ -188,24 +162,20 @@ function CandlestickChart({
     } finally {
       setLoading(false);
     }
-  }, [symbol, interval]);
+  }, [symbol, interval, token]);
 
-  // Init chart (hanya sekali)
+  // Init chart sekali saja
   useEffect(() => {
     if (!containerRef.current) return;
 
     const chart = createChart(containerRef.current, {
       localization: {
-        timeFormatter: (time: number) => {
-          const date = new Date(time * 1000);
-          return date.toLocaleString("id-ID", {
+        timeFormatter: (time: number) =>
+          new Date(time * 1000).toLocaleString("id-ID", {
             timeZone: "Asia/Jakarta",
-            day: "2-digit",
-            month: "short",
-            hour: "2-digit",
-            minute: "2-digit",
-          });
-        },
+            day: "2-digit", month: "short",
+            hour: "2-digit", minute: "2-digit",
+          }),
       },
       layout: {
         background: { type: ColorType.Solid, color: "#ffffff" },
@@ -227,14 +197,11 @@ function CandlestickChart({
         borderColor: "#e2e8f0",
         timeVisible: true,
         secondsVisible: false,
-        tickMarkFormatter: (time: number) => {
-          const date = new Date(time * 1000);
-          return date.toLocaleTimeString("id-ID", {
+        tickMarkFormatter: (time: number) =>
+          new Date(time * 1000).toLocaleTimeString("id-ID", {
             timeZone: "Asia/Jakarta",
-            hour: "2-digit",
-            minute: "2-digit",
-          });
-        },
+            hour: "2-digit", minute: "2-digit",
+          }),
       },
     });
 
@@ -242,54 +209,43 @@ function CandlestickChart({
       priceFormat: { type: "volume" },
       priceScaleId: "vol",
     });
-    volumeSeries
-      .priceScale()
-      .applyOptions({ scaleMargins: { top: 0.85, bottom: 0 } });
+    volumeSeries.priceScale().applyOptions({ scaleMargins: { top: 0.85, bottom: 0 } });
 
     const candleSeries = chart.addSeries(CandlestickSeries, {
-      upColor: "#3b82f6",
-      downColor: "#ef4444",
-      borderUpColor: "#3b82f6",
-      borderDownColor: "#ef4444",
-      wickUpColor: "#3b82f6",
-      wickDownColor: "#ef4444",
+      upColor:        "#3b82f6",
+      downColor:      "#ef4444",
+      borderUpColor:  "#3b82f6",
+      borderDownColor:"#ef4444",
+      wickUpColor:    "#3b82f6",
+      wickDownColor:  "#ef4444",
     });
-    candleSeries
-      .priceScale()
-      .applyOptions({ scaleMargins: { top: 0.05, bottom: 0.2 } });
+    candleSeries.priceScale().applyOptions({ scaleMargins: { top: 0.05, bottom: 0.2 } });
 
     chart.subscribeCrosshairMove((param) => {
       if (param.seriesData.has(candleSeries)) {
-        setHoveredCandle(
-          param.seriesData.get(candleSeries) as CandlestickData<Time>,
-        );
+        setHoveredCandle(param.seriesData.get(candleSeries) as CandlestickData<Time>);
       } else {
         setHoveredCandle(null);
       }
     });
 
-    chartRef.current = chart;
+    chartRef.current  = chart;
     seriesRef.current = candleSeries;
     volumeRef.current = volumeSeries;
 
     const ro = new ResizeObserver(() => {
       if (!containerRef.current) return;
       chart.applyOptions({
-        width: containerRef.current.clientWidth,
+        width:  containerRef.current.clientWidth,
         height: containerRef.current.clientHeight,
       });
     });
     ro.observe(containerRef.current);
 
-    return () => {
-      ro.disconnect();
-      chart.remove();
-    };
+    return () => { ro.disconnect(); chart.remove(); };
   }, []);
 
-  useEffect(() => {
-    fetchCandles();
-  }, [fetchCandles]);
+  useEffect(() => { fetchCandles(); }, [fetchCandles]);
   useEffect(() => {
     const id = setInterval(fetchCandles, 60_000);
     return () => clearInterval(id);
@@ -307,26 +263,16 @@ function CandlestickChart({
           >
             {(["O", "H", "L", "C"] as const).map((k, i) => {
               const val = [
-                hoveredCandle.open,
-                hoveredCandle.high,
-                hoveredCandle.low,
-                hoveredCandle.close,
+                hoveredCandle.open, hoveredCandle.high,
+                hoveredCandle.low,  hoveredCandle.close,
               ][i];
               const isUp = hoveredCandle.close >= hoveredCandle.open;
               return (
                 <div key={k} className="flex items-center gap-1">
-                  <span className="text-slate-400 text-[10px] font-black">
-                    {k}
-                  </span>
-                  <span
-                    className={`text-[11px] font-black font-mono ${
-                      k === "C"
-                        ? isUp
-                          ? "text-blue-600"
-                          : "text-red-500"
-                        : "text-slate-700"
-                    }`}
-                  >
+                  <span className="text-slate-400 text-[10px] font-black">{k}</span>
+                  <span className={`text-[11px] font-black font-mono ${
+                    k === "C" ? isUp ? "text-blue-600" : "text-red-500" : "text-slate-700"
+                  }`}>
                     {fmtUSD(val as number, (val as number) < 1 ? 6 : 2)}
                   </span>
                 </div>
@@ -343,9 +289,7 @@ function CandlestickChart({
       )}
       {error && (
         <div className="absolute inset-0 flex items-center justify-center z-20">
-          <p className="text-slate-400 text-[12px] font-mono">
-            Failed loading chart
-          </p>
+          <p className="text-slate-400 text-[12px] font-mono">Failed loading chart</p>
         </div>
       )}
 
@@ -356,89 +300,66 @@ function CandlestickChart({
 
 // ── PAGE ──────────────────────────────────────────────────────────
 export default function CryptoPage() {
-  const [activeCoin, setActiveCoin] = useState<CoinId>("bitcoin");
+  const [activeCoin,     setActiveCoin    ] = useState<CoinId>("bitcoin");
   const [activeInterval, setActiveInterval] = useState<Interval>("15m");
-  const [price, setPrice] = useState<CryptoPrice | null>(null);
-  const [analytics, setAnalytics] = useState<Analytics | null>(null);
-  const [loadPrice, setLoadPrice] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [lastUpdate, setLastUpdate] = useState(new Date());
+  const [price,          setPrice         ] = useState<CryptoPrice | null>(null);
+  const [analytics,      setAnalytics     ] = useState<Analytics | null>(null);
+  const [loadPrice,      setLoadPrice     ] = useState(true);
+  const [refreshing,     setRefreshing    ] = useState(false);
+  const [lastUpdate,     setLastUpdate    ] = useState(new Date());
 
   const { data: session } = useSession();
   const token = (session?.user as any)?.accessToken ?? "";
 
   const coin = COINS.find((c) => c.id === activeCoin)!;
 
-  // Ref untuk cancel hasil fetch yang sudah stale (race condition fix)
+  // Race-condition guard
   const fetchIdRef = useRef(0);
 
-  const fetchPrice = useCallback(
-    async (coinId: CoinId, interval: Interval) => {
-      // Setiap fetch dapat ID unik; jika ID berubah saat response tiba, buang hasilnya
-      const id = ++fetchIdRef.current;
-      const targetCoin = COINS.find((c) => c.id === coinId)!;
+  const fetchPrice = useCallback(async (coinId: CoinId, interval: Interval) => {
+    const id = ++fetchIdRef.current;
+    const targetCoin = COINS.find((c) => c.id === coinId)!;
 
-      setLoadPrice(true);
+    setLoadPrice(true);
+    try {
+      const [p, a] = await Promise.allSettled([
+        // Kirim geckoId ke backend — bukan coinId (UI id)
+        token
+          ? fetchWithToken(token, `/market/crypto?coin=${targetCoin.geckoId}`)
+          : fetch(`${API}/market/crypto?coin=${targetCoin.geckoId}`).then(r => r.json()),
 
-      try {
-        const [p, a] = await Promise.allSettled([
-          token
-            ? fetchWithToken(token, `/market/crypto?coin=${coinId}`)
-            : fetch(`${API}/market/crypto?coin=${coinId}`).then((r) =>
-                r.json(),
-              ),
-          token
-            ? fetchWithToken(
-                token,
-                `/market/analytics?symbol=${targetCoin.symbol}&interval=${interval}&limit=50`,
-              )
-            : fetch(
-                `${API}/market/analytics?symbol=${targetCoin.symbol}&interval=${interval}&limit=50`,
-              ).then((r) => r.json()),
-        ]);
+        token
+          ? fetchWithToken(token, `/market/analytics?symbol=${targetCoin.symbol}&interval=${interval}&limit=50`)
+          : fetch(`${API}/market/analytics?symbol=${targetCoin.symbol}&interval=${interval}&limit=50`).then(r => r.json()),
+      ]);
 
-        // Abaikan kalau sudah ada fetch lebih baru
-        if (id !== fetchIdRef.current) return;
+      if (id !== fetchIdRef.current) return; // stale, buang
 
-        if (p.status === "fulfilled" && p.value?.price_usd != null) {
-          setPrice(p.value);
-        }
-        if (a.status === "fulfilled" && a.value?.price != null) {
-          setAnalytics(a.value);
-        }
-      } finally {
-        if (id === fetchIdRef.current) {
-          setLoadPrice(false);
-          setLastUpdate(new Date());
-        }
+      if (p.status === "fulfilled" && p.value?.price_usd != null) setPrice(p.value);
+      if (a.status === "fulfilled" && a.value?.price    != null) setAnalytics(a.value);
+    } finally {
+      if (id === fetchIdRef.current) {
+        setLoadPrice(false);
+        setLastUpdate(new Date());
       }
-    },
-    [token],
-  );
+    }
+  }, [token]);
 
-  // Ganti coin → reset state lama, fetch baru
+  // Fetch saat coin / interval berubah (debounce 300ms)
   useEffect(() => {
-    setPrice(null);
-    setAnalytics(null);
-    fetchPrice(activeCoin, activeInterval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeCoin]);
+    const timer = setTimeout(() => {
+      setPrice(null);
+      setAnalytics(null);
+      fetchPrice(activeCoin, activeInterval);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [activeCoin, activeInterval, fetchPrice]);
 
-  // Ganti interval → fetch baru (tanpa reset price)
+  // Auto-refresh 2 menit (selaras dengan cache backend)
   useEffect(() => {
-    fetchPrice(activeCoin, activeInterval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeInterval]);
-
-  // Auto-refresh 60s
-  useEffect(() => {
-    const id = setInterval(
-      () => fetchPrice(activeCoin, activeInterval),
-      60_000,
-    );
+    const id = setInterval(() => fetchPrice(activeCoin, activeInterval), 120_000);
     return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeCoin, activeInterval]);
+  }, [activeCoin, activeInterval, fetchPrice]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -451,11 +372,10 @@ export default function CryptoPage() {
   return (
     <div
       className="min-h-full bg-slate-50 px-4 py-6 sm:px-6 lg:px-8 xl:px-10"
-      style={{
-        fontFamily: "var(--font-sans, 'Plus Jakarta Sans', sans-serif)",
-      }}
+      style={{ fontFamily: "var(--font-sans, 'Plus Jakarta Sans', sans-serif)" }}
     >
       <div className="max-w-[1400px] mx-auto">
+
         {/* HEADER */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -468,8 +388,7 @@ export default function CryptoPage() {
               Crypto Market
             </h1>
             <p className="text-slate-400 text-[12px] font-mono mt-0.5">
-              Live market · auto-refresh 60s ·{" "}
-              {lastUpdate.toLocaleTimeString("id-ID")}
+              Live market · auto-refresh 2m · {lastUpdate.toLocaleTimeString("id-ID")}
             </p>
           </div>
           <button
@@ -478,11 +397,7 @@ export default function CryptoPage() {
           >
             <motion.span
               animate={{ rotate: refreshing ? 360 : 0 }}
-              transition={{
-                duration: 0.6,
-                repeat: refreshing ? Infinity : 0,
-                ease: "linear",
-              }}
+              transition={{ duration: 0.6, repeat: refreshing ? Infinity : 0, ease: "linear" }}
             >
               <FiRefreshCw size={13} />
             </motion.span>
@@ -529,12 +444,8 @@ export default function CryptoPage() {
                   {coin.icon}
                 </div>
                 <div>
-                  <p className="text-slate-400 text-[11px] font-mono">
-                    {coin.symbol}
-                  </p>
-                  <p className="text-slate-700 text-[13px] font-black">
-                    {coin.name}
-                  </p>
+                  <p className="text-slate-400 text-[11px] font-mono">{coin.symbol}</p>
+                  <p className="text-slate-700 text-[13px] font-black">{coin.name}</p>
                 </div>
               </div>
 
@@ -553,20 +464,11 @@ export default function CryptoPage() {
 
               {!loadPrice && price && (
                 <div className="flex items-center gap-3 mt-3">
-                  <span
-                    className={`flex items-center gap-1 text-[13px] font-black px-3 py-1.5 rounded-full ${
-                      isUp
-                        ? "bg-blue-50 text-blue-600"
-                        : "bg-red-50 text-red-500"
-                    }`}
-                  >
-                    {isUp ? (
-                      <FiTrendingUp size={12} />
-                    ) : (
-                      <FiTrendingDown size={12} />
-                    )}
-                    {isUp ? "+" : ""}
-                    {price.change_24h.toFixed(2)}%
+                  <span className={`flex items-center gap-1 text-[13px] font-black px-3 py-1.5 rounded-full ${
+                    isUp ? "bg-blue-50 text-blue-600" : "bg-red-50 text-red-500"
+                  }`}>
+                    {isUp ? <FiTrendingUp size={12} /> : <FiTrendingDown size={12} />}
+                    {isUp ? "+" : ""}{price.change_24h.toFixed(2)}%
                   </span>
                   <span className="text-slate-400 text-[11px] font-mono">
                     {fmtIDR(price.price_idr)}
@@ -579,39 +481,22 @@ export default function CryptoPage() {
             {!loadPrice && analytics && (
               <div className="flex flex-wrap gap-3">
                 <div className="bg-blue-50 border border-blue-100 rounded-2xl px-4 py-3 min-w-[90px]">
-                  <p className="text-blue-400 text-[9px] font-black uppercase tracking-widest mb-1">
-                    Signal
-                  </p>
-                  <p className="text-blue-600 text-[14px] font-black">
-                    {analytics.sentiment}
+                  <p className="text-blue-400 text-[9px] font-black uppercase tracking-widest mb-1">Signal</p>
+                  <p className="text-blue-600 text-[14px] font-black">{analytics.sentiment}</p>
+                </div>
+                <div className="bg-white border border-slate-100 rounded-2xl px-4 py-3 min-w-[90px]">
+                  <p className="text-slate-400 text-[9px] font-black uppercase tracking-widest mb-1">Volatility</p>
+                  <p className="text-slate-800 text-[14px] font-black">{analytics.volatility}%</p>
+                </div>
+                <div className="bg-white border border-slate-100 rounded-2xl px-4 py-3 min-w-[90px]">
+                  <p className="text-slate-400 text-[9px] font-black uppercase tracking-widest mb-1">Trend</p>
+                  <p className={`text-[14px] font-black ${analytics.trendScore >= 0 ? "text-blue-600" : "text-red-500"}`}>
+                    {analytics.trendScore >= 0 ? "+" : ""}{analytics.trendScore}%
                   </p>
                 </div>
                 <div className="bg-white border border-slate-100 rounded-2xl px-4 py-3 min-w-[90px]">
-                  <p className="text-slate-400 text-[9px] font-black uppercase tracking-widest mb-1">
-                    Volatility
-                  </p>
-                  <p className="text-slate-800 text-[14px] font-black">
-                    {analytics.volatility}%
-                  </p>
-                </div>
-                <div className="bg-white border border-slate-100 rounded-2xl px-4 py-3 min-w-[90px]">
-                  <p className="text-slate-400 text-[9px] font-black uppercase tracking-widest mb-1">
-                    Trend
-                  </p>
-                  <p
-                    className={`text-[14px] font-black ${analytics.trendScore >= 0 ? "text-blue-600" : "text-red-500"}`}
-                  >
-                    {analytics.trendScore >= 0 ? "+" : ""}
-                    {analytics.trendScore}%
-                  </p>
-                </div>
-                <div className="bg-white border border-slate-100 rounded-2xl px-4 py-3 min-w-[90px]">
-                  <p className="text-slate-400 text-[9px] font-black uppercase tracking-widest mb-1">
-                    Volume
-                  </p>
-                  <p className="text-slate-800 text-[14px] font-black">
-                    {fmtVol(analytics.volume)}
-                  </p>
+                  <p className="text-slate-400 text-[9px] font-black uppercase tracking-widest mb-1">Volume</p>
+                  <p className="text-slate-800 text-[14px] font-black">{fmtVol(analytics.volume)}</p>
                 </div>
               </div>
             )}
@@ -628,9 +513,7 @@ export default function CryptoPage() {
           <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
             <div className="flex items-center gap-2">
               <FiBarChart2 size={13} className="text-slate-400" />
-              <p className="text-slate-700 text-[12px] font-black">
-                {coin.symbol} · Candlestick
-              </p>
+              <p className="text-slate-700 text-[12px] font-black">{coin.symbol} · Candlestick</p>
             </div>
             <div className="flex gap-1 p-1 bg-slate-100 rounded-xl">
               {INTERVALS.map((iv) => (
@@ -678,21 +561,14 @@ export default function CryptoPage() {
           />
           <StatBox
             label="24h Change"
-            value={
-              price
-                ? `${price.change_24h >= 0 ? "+" : ""}${price.change_24h.toFixed(2)}%`
-                : "—"
-            }
-            sub={
-              price?.change_24h !== undefined
-                ? price.change_24h >= 0
-                  ? "Bullish momentum"
-                  : "Bearish momentum"
-                : undefined
-            }
+            value={price ? `${price.change_24h >= 0 ? "+" : ""}${price.change_24h.toFixed(2)}%` : "—"}
+            sub={price?.change_24h !== undefined
+              ? price.change_24h >= 0 ? "Bullish momentum" : "Bearish momentum"
+              : undefined}
             loading={loadPrice}
           />
         </motion.div>
+
       </div>
     </div>
   );

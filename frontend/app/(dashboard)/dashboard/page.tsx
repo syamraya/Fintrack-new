@@ -60,16 +60,27 @@ interface Category {
   name: string;
   type: string;
 }
+
+// FIX: tambah semua field yang dikembalikan MarketService.getGoldPrice()
 interface GoldPrice {
-  price: number;
-  high: number;
-  low: number;
+  price: number | null;
+  high: number | null;
+  low: number | null;
+  prev_close_price: number | null;
+  marketStatus: "open" | "closed";
+  message: string | null;
+  lastRefreshed: string | null;
 }
+
+// FIX: tambah price_idr dan last_updated dari MarketService.getCryptoPrice()
 interface CryptoData {
   symbol: string;
   price_usd: number;
+  price_idr: number;
   change_24h: number;
+  last_updated: string;
 }
+
 interface NewsItem {
   id: number;
   headline: string;
@@ -157,7 +168,18 @@ const CATEGORY_ICON: Record<string, string> = {
   other: "📦",
 };
 
-// use NextAuth session token via fetchWithToken
+// FIX: fetchWithToken ke backend market endpoint, bukan bare fetch
+// Ini supaya JWT dikirim dan tidak kena 401 dari JwtAuthGuard
+async function fetchMarketWithToken(
+  token: string,
+  path: string,
+): Promise<any> {
+  const res = await fetch(`${API}${path}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+  return res.json();
+}
 
 // ── Fetch news: GNews → mock fallback ────────────────────────────
 async function fetchNews(): Promise<NewsItem[]> {
@@ -386,42 +408,13 @@ function TransactionModal({
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="100000"
-            className="
-w-full
-px-4
-py-3.5
-rounded-2xl
-border
-border-slate-200
-bg-white
-text-slate-800
-placeholder:text-slate-400
-outline-none
-focus:ring-2
-focus:ring-blue-500/20
-focus:border-blue-500
-transition-all
-"
+            className="w-full px-4 py-3.5 rounded-2xl border border-slate-200 bg-white text-slate-800 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
           />
 
           <select
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
-            className="
-w-full
-px-4
-py-3.5
-rounded-2xl
-border
-border-slate-200
-bg-white
-text-slate-800
-outline-none
-focus:ring-2
-focus:ring-blue-500/20
-focus:border-blue-500
-transition-all
-"
+            className="w-full px-4 py-3.5 rounded-2xl border border-slate-200 bg-white text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
           >
             <option value="">
               {loadingCategory
@@ -441,21 +434,7 @@ transition-all
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Deskripsi"
-            className="
-w-full
-px-4
-py-3.5
-rounded-2xl
-border
-border-slate-200
-bg-white
-text-slate-800
-outline-none
-focus:ring-2
-focus:ring-blue-500/20
-focus:border-blue-500
-transition-all
-"
+            className="w-full px-4 py-3.5 rounded-2xl border border-slate-200 bg-white text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
           />
 
           <button
@@ -748,9 +727,6 @@ function SpendingAnalysis({ transactions }: { transactions: Transaction[] }) {
   );
 }
 
-// ── NewsWidget — FIXED ────────────────────────────────────────────
-// Sebelumnya: authFetch("/market/news") → endpoint yang kemungkinan tidak ada
-// Sekarang: GNews API langsung (sama seperti NewsPage) + mock fallback
 function NewsWidget({ news }: { news: NewsItem[] }) {
   return (
     <Card delay={0.14} className="p-6 col-span-12 xl:col-span-5">
@@ -820,6 +796,7 @@ function NewsWidget({ news }: { news: NewsItem[] }) {
   );
 }
 
+// FIX: PriceWidget sekarang handle gold market closed + null price
 function PriceWidget({
   gold,
   btc,
@@ -829,24 +806,36 @@ function PriceWidget({
   btc: CryptoData | null;
   eth: CryptoData | null;
 }) {
+  // FIX: ambil harga gold yang valid — price kalau open, prev_close_price kalau closed
+  const goldPrice = gold?.price ?? gold?.prev_close_price ?? null;
+  const goldHigh = gold?.high ?? null;
+  const goldClosed = gold?.marketStatus === "closed";
+
   const items = [
     {
       label: "Emas / oz",
-      value: gold ? fmtUSD(gold.price) : null,
+      value: goldPrice != null ? fmtUSD(goldPrice) : null,
       change: null,
-      sub: gold ? `H: ${fmtUSD(gold.high)}` : null,
+      // FIX: tampilkan status market closed kalau memang tutup
+      sub: goldClosed
+        ? "🔴 Market closed"
+        : goldHigh != null
+          ? `H: ${fmtUSD(goldHigh)}`
+          : null,
       icon: "🥇",
     },
     {
       label: "Bitcoin",
-      value: btc ? fmtUSD(btc.price_usd) : null,
+      // FIX: guard price_usd > 0 supaya tidak render $0.00
+      value: btc && btc.price_usd > 0 ? fmtUSD(btc.price_usd) : null,
       change: btc?.change_24h ?? null,
       sub: null,
       icon: <SiBitcoin className="text-[#f7931a]" size={14} />,
     },
     {
       label: "Ethereum",
-      value: eth ? fmtUSD(eth.price_usd) : null,
+      // FIX: guard price_usd > 0
+      value: eth && eth.price_usd > 0 ? fmtUSD(eth.price_usd) : null,
       change: eth?.change_24h ?? null,
       sub: null,
       icon: <SiEthereum className="text-[#627eea]" size={14} />,
@@ -1014,11 +1003,12 @@ export default function DashboardPage() {
     setTransactions(Array.isArray(tx) ? tx : []);
   };
 
-  const fetchMarket = async () => {
+  // FIX: kirim token ke market endpoints — controller pakai JwtAuthGuard
+  const fetchMarket = async (t: string) => {
     const [g, b, e, n] = await Promise.allSettled([
-      fetch(`${API}/market/gold-price`).then((r) => r.json()),
-      fetch(`${API}/market/crypto?coin=bitcoin`).then((r) => r.json()),
-      fetch(`${API}/market/crypto?coin=ethereum`).then((r) => r.json()),
+      fetchMarketWithToken(t, "/market/gold-price"),
+      fetchMarketWithToken(t, "/market/crypto?coin=bitcoin"),
+      fetchMarketWithToken(t, "/market/crypto?coin=ethereum"),
       fetchNews(),
     ]);
 
@@ -1031,17 +1021,15 @@ export default function DashboardPage() {
   const fetchAll = async () => {
     setRefreshing(true);
     try {
-      // News pakai GNews langsung (sama seperti NewsPage), bukan authFetch("/market/news")
       const [u, s, tx, g, b, e, n] = await Promise.allSettled([
         token ? fetchWithToken(token, "/users/me") : Promise.resolve(null),
-        token
-          ? fetchWithToken(token, "/transactions/stats")
-          : Promise.resolve(null),
+        token ? fetchWithToken(token, "/transactions/stats") : Promise.resolve(null),
         token ? fetchWithToken(token, "/transactions") : Promise.resolve([]),
-        fetch(`${API}/market/gold-price`).then((r) => r.json()),
-        fetch(`${API}/market/crypto?coin=bitcoin`).then((r) => r.json()),
-        fetch(`${API}/market/crypto?coin=ethereum`).then((r) => r.json()),
-        fetchNews(), // ← FIXED: pakai helper fetchNews() yang fetch ke GNews + mock fallback
+        // FIX: gunakan fetchMarketWithToken, bukan bare fetch
+        fetchMarketWithToken(token, "/market/gold-price"),
+        fetchMarketWithToken(token, "/market/crypto?coin=bitcoin"),
+        fetchMarketWithToken(token, "/market/crypto?coin=ethereum"),
+        fetchNews(),
       ]);
       if (u.status === "fulfilled") setUser(u.value);
       if (s.status === "fulfilled") setStats(s.value);
@@ -1050,19 +1038,20 @@ export default function DashboardPage() {
       if (g.status === "fulfilled") setGold(g.value);
       if (b.status === "fulfilled") setBtc(b.value);
       if (e.status === "fulfilled") setEth(e.value);
-      if (n.status === "fulfilled") setNews(n.value); // sudah berupa NewsItem[]
+      if (n.status === "fulfilled") setNews(n.value);
       setLastUpdate(new Date().toLocaleTimeString("id-ID"));
     } finally {
       setRefreshing(false);
     }
   };
 
+  // FIX: tunggu token tersedia sebelum fetch market
   useEffect(() => {
     if (!token) return;
-
     refreshTransactions();
-    fetchMarket();
+    fetchMarket(token);
   }, [token]);
+
   return (
     <>
       <AnimatePresence>
