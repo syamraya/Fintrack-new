@@ -4,10 +4,8 @@ import axios from 'axios';
 @Injectable()
 export class MarketService {
   private readonly logger = new Logger(MarketService.name);
-
   private readonly baseUrl = 'https://www.goldapi.io/api/XAU/USD';
   private readonly binanceUrl = 'https://api.binance.com/api/v3/klines';
-  getGoldNews: any;
 
   async getCryptoPrice(coinId: string = 'bitcoin') {
     try {
@@ -90,6 +88,39 @@ async getGoldPrice() {
     );
   }
 }
+
+async getGoldNews() {
+    const apiKey = process.env.GNEWS_API_KEY;
+    const query = 'gold market OR crypto OR finance';
+
+    try {
+      const response = await axios.get('https://gnews.io/api/v4/search', {
+        params: {
+          q: query,
+          lang: 'en',          
+          max: 10,            
+          apikey: apiKey,
+        },
+      });
+
+      const articles = response.data.articles || [];
+      return articles.map((article: any) => ({
+        title: article.title,
+        description: article.description,
+        content: article.content,
+        url: article.url,
+        image: article.image,
+        publishedAt: article.publishedAt,
+        source: article.source?.name || 'Unknown Source',
+      }));
+
+    } catch (error: any) {
+      this.logger.error(`GNews API Error: ${error.message}`);
+      throw new InternalServerErrorException(
+        'Gagal mengambil berita finansial terbaru.',
+      );
+    }
+  }
 
   async getAnalytics(
     symbol: string = 'BTCUSDT',

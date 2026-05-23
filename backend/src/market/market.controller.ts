@@ -19,7 +19,7 @@ export class MarketController {
 
   @Get('news')
   @UseGuards(JwtAuthGuard)
-  async getNews() {
+ async getNews() {
     return this.marketService.getGoldNews();
   }
 
