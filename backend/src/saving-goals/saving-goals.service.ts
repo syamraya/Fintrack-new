@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { AddDepositDto, CreateSavingGoalDto } from "./dto/create-saving-goal.dto";
-import { PrismaService } from "src/prisma/prisma.service";
+import { PrismaService } from "../prisma/prisma.service";
 import { Prisma,TransactionType  } from "@prisma/client";
 
 @Injectable()
