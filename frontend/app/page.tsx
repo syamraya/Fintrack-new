@@ -222,6 +222,12 @@ export default function LandingPage() {
 
               <button
                 suppressHydrationWarning
+                onClick={() =>
+                  window.open(
+                    "https://drive.google.com/drive/folders/1rj8e6dBRLl3ew-pxcGhbyFfPB-JZqTWA?usp=drive_link",
+                    "_blank",
+                  )
+                }
                 className="text-slate-600 font-semibold hover:text-slate-900 transition-colors"
               >
                 View Demo
@@ -375,7 +381,10 @@ export default function LandingPage() {
                         </p>
 
                         {/* suppressHydrationWarning: currentTime is "" on server, time string on client */}
-                        <p suppressHydrationWarning className="text-xs text-slate-400 mt-1">
+                        <p
+                          suppressHydrationWarning
+                          className="text-xs text-slate-400 mt-1"
+                        >
                           {currentTime}
                         </p>
                       </div>

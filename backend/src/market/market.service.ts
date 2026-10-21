@@ -47,7 +47,7 @@ export class MarketService {
   }
 
   /**
-   * 2. Ambil Harga Emas XAU/USD (Binance PAXGUSDT - Real-time & Gratis Tanpa Key)
+   * 2. Ambil Harga Emas XAU/USD (Binance PAXGUSDT)
    */
   async getGoldPrice() {
     try {
@@ -87,7 +87,7 @@ export class MarketService {
   }
 
   /**
-   * 3. Ambil Berita Finansial (CryptoCompare Public API - Gratis Tanpa Key)
+   * 3. Ambil Berita Finansial (CryptoCompare Public API)
    */
   async getGoldNews() {
     try {
@@ -170,6 +170,36 @@ export class MarketService {
       this.logger.error(`Binance Analytics Error: ${error.message}`);
       throw new InternalServerErrorException(
         'Gagal mengambil data analytics dari Binance.',
+      );
+    }
+  }
+
+  /**
+   * 5. Proxy Klines/Candle Data (Binance Public API)
+   */
+  async getKlines(
+    symbol: string = 'BTCUSDT',
+    interval: string = '5m',
+    limit: number = 500,
+  ) {
+    try {
+      const response = await axios.get(this.binanceUrl, {
+        params: { symbol, interval, limit },
+      });
+
+      return response.data.map((c: any[]) => ({
+        openTime: c[0],
+        open: parseFloat(c[1]),
+        high: parseFloat(c[2]),
+        low: parseFloat(c[3]),
+        close: parseFloat(c[4]),
+        volume: parseFloat(c[5]),
+        closeTime: c[6],
+      }));
+    } catch (error: any) {
+      this.logger.error(`Get Klines Error: ${error.message}`);
+      throw new InternalServerErrorException(
+        'Gagal mengambil data klines dari Binance.',
       );
     }
   }

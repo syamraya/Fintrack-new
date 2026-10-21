@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards } from "@nestjs/common";
 import { AddDepositDto, CreateSavingGoalDto } from "./dto/create-saving-goal.dto";
-import { JwtAuthGuard } from "src/auth/jwt-auth.guard";
+import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { SavingGoalsService } from "./saving-goals.service";
 
 @Controller('saving-goals')
