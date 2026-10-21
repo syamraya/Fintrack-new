@@ -12,6 +12,8 @@ async function bootstrap() {
     origin: [
       "http://localhost:3000", 
       "https://fintrack-new-pi.vercel.app",
+      "https://fintrack-qajd3eo2e-syamrayas-projects.vercel.app",
+      "https://fintrack-new-backend.vercel.app/"
     ],
     credentials: true,
   });
