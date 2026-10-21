@@ -1,12 +1,14 @@
-import {Injectable,InternalServerErrorException,Logger,} from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import axios from 'axios';
 
 @Injectable()
 export class MarketService {
   private readonly logger = new Logger(MarketService.name);
-  private readonly baseUrl = 'https://www.goldapi.io/api/XAU/USD';
   private readonly binanceUrl = 'https://api.binance.com/api/v3/klines';
 
+  /**
+   * 1. Ambil Harga Kripto (CoinGecko Public API)
+   */
   async getCryptoPrice(coinId: string = 'bitcoin') {
     try {
       const response = await axios.get(
@@ -44,84 +46,77 @@ export class MarketService {
     }
   }
 
-async getGoldPrice() {
-  const apiKey = process.env.GOLD_API_KEY;
-
-  try {
-    const response = await axios.get(this.baseUrl, {
-      headers: {
-        'x-access-token': apiKey,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    const data = response.data;
-
-    if (!data || data.error) {
-      throw new InternalServerErrorException(
-        `GoldAPI error: ${data?.error || 'Unknown Error'}`,
-      );
-    }
-
-    const isMarketClosed = !data.price || data.price === 0;
-
-    return {
-      from: 'XAU',
-      to: 'USD',
-      price: data.price ?? null,
-      high: data.high ?? null,
-      low: data.low ?? null,
-      prev_close_price: data.prev_close_price ?? null,
-      lastRefreshed: data.timestamp
-        ? new Date(data.timestamp * 1000).toISOString()
-        : null,
-      isMock: false,
-      marketStatus: isMarketClosed ? 'closed' : 'open',
-      message: isMarketClosed
-        ? 'Market emas sedang tutup, menampilkan harga terakhir.'
-        : null,
-    };
-  } catch (error: any) {
-    this.logger.error(`GoldAPI Crash: ${error.message}`);
-    throw new InternalServerErrorException(
-      'Data gold tidak tersedia saat ini.',
-    );
-  }
-}
-
-async getGoldNews() {
-    const apiKey = process.env.GNEWS_API_KEY;
-    const query = 'gold market OR crypto OR finance';
-
+  /**
+   * 2. Ambil Harga Emas XAU/USD (Binance PAXGUSDT - Real-time & Gratis Tanpa Key)
+   */
+  async getGoldPrice() {
     try {
-      const response = await axios.get('https://gnews.io/api/v4/search', {
-        params: {
-          q: query,
-          lang: 'en',          
-          max: 10,            
-          apikey: apiKey,
-        },
+      const response = await axios.get('https://api.binance.com/api/v3/ticker/24hr', {
+        params: { symbol: 'PAXGUSDT' },
       });
 
-      const articles = response.data.articles || [];
-      return articles.map((article: any) => ({
-        title: article.title,
-        description: article.description,
-        content: article.content,
-        url: article.url,
-        image: article.image,
-        publishedAt: article.publishedAt,
-        source: article.source?.name || 'Unknown Source',
-      }));
+      const data = response.data;
 
+      if (!data || !data.lastPrice) {
+        throw new Error('Gagal mengambil ticker PAXGUSDT dari Binance');
+      }
+
+      const price = parseFloat(data.lastPrice);
+      const high = parseFloat(data.highPrice);
+      const low = parseFloat(data.lowPrice);
+      const prevClose = parseFloat(data.prevClosePrice);
+
+      return {
+        from: 'XAU',
+        to: 'USD',
+        price: price,
+        high: high,
+        low: low,
+        prev_close_price: prevClose,
+        lastRefreshed: new Date(data.closeTime).toISOString(),
+        isMock: false,
+        marketStatus: 'open',
+        message: null,
+      };
     } catch (error: any) {
-      this.logger.error(`GNews API Error: ${error.message}`);
+      this.logger.error(`Binance Gold (PAXG) Error: ${error.message}`);
+      throw new InternalServerErrorException(
+        'Data harga emas tidak tersedia saat ini.',
+      );
+    }
+  }
+
+  /**
+   * 3. Ambil Berita Finansial (CryptoCompare Public API - Gratis Tanpa Key)
+   */
+  async getGoldNews() {
+    try {
+      const response = await axios.get(
+        'https://min-api.cryptocompare.com/data/v2/news/?lang=EN',
+      );
+
+      const articles = response.data?.Data || [];
+
+      return articles.slice(0, 10).map((article: any) => ({
+        title: article.title,
+        description: article.body,
+        content: article.body,
+        url: article.url,
+        image: article.imageurl,
+        publishedAt: new Date(article.published_on * 1000).toISOString(),
+        source: article.source_info?.name || article.source || 'CryptoCompare',
+      }));
+    } catch (error: any) {
+      this.logger.error(`News API Error: ${error.message}`);
       throw new InternalServerErrorException(
         'Gagal mengambil berita finansial terbaru.',
       );
     }
   }
 
+  /**
+   * 4. Market Analytics Candle (Binance Public API)
+   */
   async getAnalytics(
     symbol: string = 'BTCUSDT',
     interval: string = '5m',
@@ -148,7 +143,7 @@ async getGoldNews() {
       const oldest = closes[0];
 
       const volatility = parseFloat(
-        ((high - low) / low * 100).toFixed(2),
+        (((high - low) / low) * 100).toFixed(2),
       );
 
       const trendScore = parseFloat(

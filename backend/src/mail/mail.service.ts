@@ -4,8 +4,6 @@ import { BrevoClient } from '@getbrevo/brevo';
 @Injectable()
 export class MailService {
   private client: BrevoClient;
-  private senderEmail = process.env.MAIL_FROM || process.env.EMAIL_USER || 'fintrack444@gmail.com';
-  private senderName = process.env.MAIL_FROM_NAME || 'FinTrack Admin';
 
   constructor() {
     const apiKey = process.env.BREVO_API_KEY;
@@ -19,12 +17,16 @@ export class MailService {
   }
 
   async sendMail(to: string, subject: string, html: string) {
+    // Evaluasi sender email dan name secara langsung saat fungsi dipanggil
+    const senderEmail = process.env.EMAIL_FROM || 'fintrack444@gmail.com';
+    const senderName = process.env.MAIL_FROM_NAME || 'FinTrack Admin';
+
     try {
       const response = await this.client.transactionalEmails.sendTransacEmail({
         to: [{ email: to }],
         subject,
         htmlContent: html,
-        sender: { name: this.senderName, email: this.senderEmail },
+        sender: { name: senderName, email: senderEmail },
       });
 
       console.log('[MailService] Brevo transaction response:', response);
